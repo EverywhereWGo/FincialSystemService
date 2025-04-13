@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.finance.FinCategoryMapper">
+    
+    <resultMap type="FinCategory" id="FinCategoryResult">
+        <id     property="id"           column="id"            />
+        <result property="name"         column="name"          />
+        <result property="type"         column="type"          />
+        <result property="icon"         column="icon"          />
+        <result property="color"        column="color"         />
+        <result property="userId"       column="user_id"       />
+        <result property="displayOrder" column="display_order" />
+        <result property="delFlag"      column="del_flag"      />
+        <result property="createBy"     column="create_by"     />
+        <result property="createTime"   column="create_time"   />
+        <result property="updateBy"     column="update_by"     />
+        <result property="updateTime"   column="update_time"   />
+        <result property="remark"       column="remark"        />
+    </resultMap>
+    
+    <sql id="selectFinCategoryVo">
+        select id, name, type, icon, color, user_id, display_order, del_flag, create_by, create_time, update_by, update_time, remark 
+        from fin_categories
+    </sql>
+    
+    <select id="selectFinCategoryById" parameterType="Long" resultMap="FinCategoryResult">
+        <include refid="selectFinCategoryVo"/>
+        where id = #{id} and del_flag = '0'
+    </select>
+    
+    <select id="selectFinCategoryList" parameterType="FinCategory" resultMap="FinCategoryResult">
+        <include refid="selectFinCategoryVo"/>
+        <where>
+            del_flag = '0'
+            <if test="name != null and name != ''">
+                AND name like concat('%', #{name}, '%')
+            </if>
+            <if test="type != null">
+                AND type = #{type}
+            </if>
+            <if test="icon != null and icon != ''">
+                AND icon = #{icon}
+            </if>
+            <if test="userId != null">
+                AND (user_id = #{userId} OR user_id IS NULL)
+            </if>
+        </where>
+        order by display_order
+    </select>
+    
+    <select id="selectFinCategoryByType" parameterType="Integer" resultMap="FinCategoryResult">
+        <include refid="selectFinCategoryVo"/>
+        where type = #{type} and del_flag = '0'
+        order by display_order
+    </select>
+    
+    <select id="selectFinCategoryByUserId" parameterType="Long" resultMap="FinCategoryResult">
+        <include refid="selectFinCategoryVo"/>
+        where (user_id = #{userId} or user_id is null) and del_flag = '0'
+        order by display_order
+    </select>
+    
+    <select id="checkCategoryNameUnique" parameterType="FinCategory" resultMap="FinCategoryResult">
+        <include refid="selectFinCategoryVo"/>
+        where name = #{name} and type = #{type} and user_id = #{userId} and del_flag = '0' limit 1
+    </select>
+    
+    <insert id="insertFinCategory" parameterType="FinCategory" useGeneratedKeys="true" keyProperty="id">
+        insert into fin_categories (
+            <if test="name != null and name != ''">name,</if>
+            <if test="type != null">type,</if>
+            <if test="icon != null">icon,</if>
+            <if test="color != null">color,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="displayOrder != null">display_order,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+            create_time
+        ) values (
+            <if test="name != null and name != ''">#{name},</if>
+            <if test="type != null">#{type},</if>
+            <if test="icon != null">#{icon},</if>
+            <if test="color != null">#{color},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="displayOrder != null">#{displayOrder},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+            sysdate()
+        )
+    </insert>
+    
+    <update id="updateFinCategory" parameterType="FinCategory">
+        update fin_categories
+        <set>
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="icon != null">icon = #{icon},</if>
+            <if test="color != null">color = #{color},</if>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="displayOrder != null">display_order = #{displayOrder},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = sysdate()
+        </set>
+        where id = #{id}
+    </update>
+    
+    <update id="deleteFinCategoryById" parameterType="Long">
+        update fin_categories set del_flag = '2', update_time = sysdate() where id = #{id}
+    </update>
+    
+    <update id="deleteFinCategoryByIds" parameterType="Long">
+        update fin_categories set del_flag = '2', update_time = sysdate() where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+    
+</mapper> 

@@ -15,5 +15,9 @@ const getters = {
   topbarRouters:state => state.permission.topbarRouters,
   defaultRoutes:state => state.permission.defaultRoutes,
   sidebarRouters:state => state.permission.sidebarRouters,
+  // 财务系统相关
+  financeToken: state => state.financeUser.token,
+  financeUser: state => state.financeUser.user,
+  financeExpiry: state => state.financeUser.expiryTime,
 }
 export default getters

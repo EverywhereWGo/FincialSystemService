@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import com.ruoyi.common.filter.RepeatableFilter;
 import com.ruoyi.common.filter.XssFilter;
 import com.ruoyi.common.utils.StringUtils;
+import com.ruoyi.framework.filter.ApiLoggingFilter;
 
 /**
  * Filter配置
@@ -54,5 +55,21 @@ public class FilterConfig
         registration.setOrder(FilterRegistrationBean.LOWEST_PRECEDENCE);
         return registration;
     }
-
+    
+    /**
+     * API请求响应日志记录过滤器
+     * 记录所有API的请求和响应详情
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @Bean
+    public FilterRegistrationBean apiLoggingFilterRegistration()
+    {
+        FilterRegistrationBean registration = new FilterRegistrationBean();
+        registration.setFilter(new ApiLoggingFilter());
+        registration.addUrlPatterns("/*");
+        registration.setName("apiLoggingFilter");
+        // 在所有过滤器之前执行，确保能捕获所有请求
+        registration.setOrder(-2147483647);
+        return registration;
+    }
 }

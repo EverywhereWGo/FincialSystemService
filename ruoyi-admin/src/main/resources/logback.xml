@@ -75,6 +75,25 @@
 	<logger name="com.ruoyi" level="info" />
 	<!-- Spring日志级别控制  -->
 	<logger name="org.springframework" level="warn" />
+	
+	<!-- API访问日志 -->
+	<appender name="api-log" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${log.path}/api-access.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<!-- 按天回滚 daily -->
+			<fileNamePattern>${log.path}/api-access.%d{yyyy-MM-dd}.log</fileNamePattern>
+			<!-- 日志最大的历史 60天 -->
+			<maxHistory>60</maxHistory>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${log.pattern}</pattern>
+		</encoder>
+	</appender>
+	
+	<!-- API接口访问日志 -->
+	<logger name="api-access" level="info" additivity="false">
+		<appender-ref ref="api-log" />
+	</logger>
 
 	<root level="info">
 		<appender-ref ref="console" />

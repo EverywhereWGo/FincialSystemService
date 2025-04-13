@@ -9,6 +9,12 @@
       <template v-if="device!=='mobile'">
         <search id="header-search" class="right-menu-item" />
 
+        <el-tooltip content="进入财务系统" effect="dark" placement="bottom">
+          <router-link to="/finance/index" class="right-menu-item hover-effect">
+            <svg-icon icon-class="money" />
+          </router-link>
+        </el-tooltip>
+
         <el-tooltip content="源码地址" effect="dark" placement="bottom">
           <ruo-yi-git id="ruoyi-git" class="right-menu-item hover-effect" />
         </el-tooltip>

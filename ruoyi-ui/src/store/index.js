@@ -7,6 +7,7 @@ import tagsView from './modules/tagsView'
 import permission from './modules/permission'
 import settings from './modules/settings'
 import getters from './getters'
+import financeUser from './modules/financeUser'
 
 Vue.use(Vuex)
 
@@ -17,9 +18,16 @@ const store = new Vuex.Store({
     user,
     tagsView,
     permission,
-    settings
+    settings,
+    financeUser  // 添加财务系统用户模块
   },
-  getters
+  getters,
+  actions: {
+    // 使用原系统token访问财务系统
+    UseMainToken({ dispatch }) {
+      return dispatch('financeUser/UseMainToken')
+    }
+  }
 })
 
 export default store

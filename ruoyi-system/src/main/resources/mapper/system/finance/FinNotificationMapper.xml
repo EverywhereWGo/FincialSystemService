@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.finance.FinNotificationMapper">
+    
+    <resultMap type="com.ruoyi.system.domain.finance.FinNotification" id="FinNotificationResult">
+        <result property="id"     column="id"     />
+        <result property="userId"     column="user_id"     />
+        <result property="title"   column="title"   />
+        <result property="content"   column="content"   />
+        <result property="type"   column="type"   />
+        <result property="read"   column="is_read"   />
+        <result property="delFlag"   column="del_flag"   />
+        <result property="createBy"   column="create_by"   />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy"   column="update_by"   />
+        <result property="updateTime" column="update_time" />
+        <result property="remark"     column="remark"     />
+    </resultMap>
+
+    <sql id="selectFinNotificationVo">
+        select id, user_id, title, content, type, is_read, del_flag, create_by, create_time, update_by, update_time, remark
+        from fin_notification
+    </sql>
+
+    <select id="selectFinNotificationList" parameterType="com.ruoyi.system.domain.finance.FinNotification" resultMap="FinNotificationResult">
+        <include refid="selectFinNotificationVo"/>
+        <where>  
+            del_flag = '0'
+            <if test="userId != null "> and user_id = #{userId}</if>
+            <if test="title != null  and title != ''"> and title like concat('%', #{title}, '%')</if>
+            <if test="content != null  and content != ''"> and content like concat('%', #{content}, '%')</if>
+            <if test="type != null  and type != ''"> and type = #{type}</if>
+            <if test="read != null "> and is_read = #{read}</if>
+        </where>
+        order by create_time desc
+    </select>
+    
+    <select id="selectFinNotificationById" parameterType="Long" resultMap="FinNotificationResult">
+        <include refid="selectFinNotificationVo"/>
+        where id = #{id} and del_flag = '0'
+    </select>
+    
+    <select id="selectUnreadNotificationsByUserId" parameterType="Long" resultMap="FinNotificationResult">
+        <include refid="selectFinNotificationVo"/>
+        where user_id = #{userId} and is_read = 0 and del_flag = '0'
+        order by create_time desc
+    </select>
+        
+    <insert id="insertFinNotification" parameterType="com.ruoyi.system.domain.finance.FinNotification" useGeneratedKeys="true" keyProperty="id">
+        insert into fin_notification
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="title != null">title,</if>
+            <if test="content != null">content,</if>
+            <if test="type != null">type,</if>
+            <if test="read != null">is_read,</if>
+            <if test="createBy != null">create_by,</if>
+            create_time,
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+            del_flag,
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="title != null">#{title},</if>
+            <if test="content != null">#{content},</if>
+            <if test="type != null">#{type},</if>
+            <if test="read != null">#{read},</if>
+            <if test="createBy != null">#{createBy},</if>
+            sysdate(),
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+            '0',
+         </trim>
+    </insert>
+    
+    <update id="updateFinNotification" parameterType="com.ruoyi.system.domain.finance.FinNotification">
+        update fin_notification
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="title != null">title = #{title},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="read != null">is_read = #{read},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = sysdate(),
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where id = #{id}
+    </update>
+    
+    <update id="markAsRead" parameterType="Long">
+        update fin_notification
+        set is_read = 1,
+        update_time = sysdate()
+        where id = #{id}
+    </update>
+    
+    <update id="markAllAsRead" parameterType="Long">
+        update fin_notification
+        set is_read = 1,
+        update_time = sysdate()
+        where user_id = #{userId} and is_read = 0
+    </update>
+
+    <delete id="deleteFinNotificationById" parameterType="Long">
+        update fin_notification set del_flag = '2' where id = #{id}
+    </delete>
+
+    <delete id="deleteFinNotificationByIds" parameterType="Long">
+        update fin_notification set del_flag = '2' where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    
+    <update id="batchMarkAsRead" parameterType="Map">
+        update fin_notification
+        set is_read = 1,
+        update_time = sysdate()
+        where user_id = #{userId} and id in
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+    
+</mapper>

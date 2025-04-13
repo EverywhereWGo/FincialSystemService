@@ -25,7 +25,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 
 /**
  * token验证处理
- * 
+ *
  * @author ruoyi
  */
 @Component
@@ -56,13 +56,14 @@ public class TokenService
 
     /**
      * 获取用户身份信息
-     * 
+     *
      * @return 用户信息
      */
     public LoginUser getLoginUser(HttpServletRequest request)
     {
         // 获取请求携带的令牌
         String token = getToken(request);
+
         if (StringUtils.isNotEmpty(token))
         {
             try
@@ -107,7 +108,7 @@ public class TokenService
 
     /**
      * 创建令牌
-     * 
+     *
      * @param loginUser 用户信息
      * @return 令牌
      */
@@ -126,7 +127,7 @@ public class TokenService
 
     /**
      * 验证令牌有效期，相差不足20分钟，自动刷新缓存
-     * 
+     *
      * @param loginUser 登录信息
      * @return 令牌
      */
@@ -142,7 +143,7 @@ public class TokenService
 
     /**
      * 刷新令牌有效期
-     * 
+     *
      * @param loginUser 登录信息
      */
     public void refreshToken(LoginUser loginUser)
@@ -156,7 +157,7 @@ public class TokenService
 
     /**
      * 设置用户代理信息
-     * 
+     *
      * @param loginUser 登录信息
      */
     public void setUserAgent(LoginUser loginUser)

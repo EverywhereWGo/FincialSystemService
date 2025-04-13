@@ -20,6 +20,7 @@ import com.ruoyi.framework.config.properties.PermitAllUrlProperties;
 import com.ruoyi.framework.security.filter.JwtAuthenticationTokenFilter;
 import com.ruoyi.framework.security.handle.AuthenticationEntryPointImpl;
 import com.ruoyi.framework.security.handle.LogoutSuccessHandlerImpl;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 
 /**
  * spring security配置
@@ -112,6 +113,8 @@ public class SecurityConfig
                 permitAllUrl.getUrls().forEach(url -> requests.antMatchers(url).permitAll());
                 // 对于登录login 注册register 验证码captchaImage 允许匿名访问
                 requests.antMatchers("/login", "/register", "/captchaImage").permitAll()
+                    // 财务系统全部接口允许匿名访问
+                    .antMatchers("/finance/**").permitAll()
                     // 静态资源，可匿名访问
                     .antMatchers(HttpMethod.GET, "/", "/*.html", "/**/*.html", "/**/*.css", "/**/*.js", "/profile/**").permitAll()
                     .antMatchers("/swagger-ui.html", "/swagger-resources/**", "/webjars/**", "/*/api-docs", "/druid/**").permitAll()
@@ -135,5 +138,49 @@ public class SecurityConfig
     public BCryptPasswordEncoder bCryptPasswordEncoder()
     {
         return new BCryptPasswordEncoder();
+    }
+
+    /**
+     * 添加路径重写过滤器，将简化路径重定向到/finance/前缀路径
+     */
+    @Bean
+    public FilterRegistrationBean<javax.servlet.Filter> urlRewriteFilter() {
+        FilterRegistrationBean<javax.servlet.Filter> registration = new FilterRegistrationBean<>();
+        registration.setFilter(new javax.servlet.Filter() {
+            @Override
+            public void init(javax.servlet.FilterConfig filterConfig) {}
+            
+            @Override
+            public void doFilter(javax.servlet.ServletRequest request, javax.servlet.ServletResponse response, 
+                    javax.servlet.FilterChain chain) throws java.io.IOException, javax.servlet.ServletException {
+                javax.servlet.http.HttpServletRequest httpRequest = (javax.servlet.http.HttpServletRequest) request;
+                String uri = httpRequest.getRequestURI();
+                String queryString = httpRequest.getQueryString();
+                
+                // 需要重写的路径前缀
+                String[] prefixes = {"/category/", "/transaction/", "/budget/", "/statistic/", "/notification/", "/user/"};
+                
+                for (String prefix : prefixes) {
+                    if (uri.startsWith(prefix)) {
+                        // 重定向到正确的路径，保留查询参数
+                        String newUri = "/finance" + uri;
+                        if (queryString != null && !queryString.isEmpty()) {
+                            newUri += "?" + queryString;
+                        }
+                        ((javax.servlet.http.HttpServletResponse) response).sendRedirect(newUri);
+                        return;
+                    }
+                }
+                
+                chain.doFilter(request, response);
+            }
+            
+            @Override
+            public void destroy() {}
+        });
+        // 添加需要过滤的URL模式
+        registration.addUrlPatterns("/category/*", "/transaction/*", "/budget/*", "/statistic/*", "/notification/*", "/user/*");
+        registration.setOrder(1);
+        return registration;
     }
 }

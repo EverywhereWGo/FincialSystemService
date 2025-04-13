@@ -1,0 +1,834 @@
+<template>
+  <div class="app-container">
+    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
+      <el-form-item label="用户ID" prop="userId" v-if="isAdmin">
+        <el-input v-model="queryParams.userId" placeholder="请输入用户ID" clearable style="width: 240px" @keyup.enter.native="handleQuery" />
+      </el-form-item>
+      <el-form-item label="分类" prop="categoryId">
+        <el-select v-model="queryParams.categoryId" placeholder="请选择分类" clearable style="width: 240px">
+          <el-option v-for="item in categoryOptions" :key="item.id" :label="item.name" :value="item.id" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="类型" prop="type">
+        <el-select v-model="queryParams.type" placeholder="请选择类型" clearable style="width: 240px">
+          <el-option label="支出" :value="1" />
+          <el-option label="收入" :value="2" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="金额" prop="amount">
+        <el-input v-model="queryParams.amount" placeholder="请输入金额" clearable style="width: 240px" @keyup.enter.native="handleQuery" />
+      </el-form-item>
+      <el-form-item label="交易时间">
+        <el-date-picker
+          v-model="dateRange"
+          style="width: 240px"
+          value-format="timestamp"
+          type="daterange"
+          range-separator="-"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+        ></el-date-picker>
+      </el-form-item>
+      <el-form-item label="备注" prop="note">
+        <el-input v-model="queryParams.note" placeholder="请输入备注" clearable style="width: 240px" @keyup.enter.native="handleQuery" />
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+      </el-form-item>
+    </el-form>
+
+    <el-row :gutter="10" class="mb8">
+      <el-col :span="1.5">
+        <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd" v-hasPermi="['finance:transaction:add']">新增</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate" v-hasPermi="['finance:transaction:edit']">修改</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete" v-hasPermi="['finance:transaction:remove']">删除</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport" v-hasPermi="['finance:transaction:export']">导出</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button type="info" plain icon="el-icon-s-data" size="mini" @click="handleStatistics" v-hasPermi="['finance:transaction:query']">统计</el-button>
+      </el-col>
+      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList" :columns="columns"></right-toolbar>
+    </el-row>
+
+    <el-table v-loading="loading" :data="transactionList" @selection-change="handleSelectionChange">
+      <el-table-column type="selection" width="55" align="center" />
+      <el-table-column label="交易ID" align="center" prop="id" v-if="columns[0].visible" />
+      <el-table-column label="用户ID" align="center" prop="userId" v-if="columns[1].visible && isAdmin" />
+      <el-table-column label="分类" align="center" prop="categoryName" v-if="columns[2].visible" :show-overflow-tooltip="true" />
+      <el-table-column label="金额" align="center" prop="amount" v-if="columns[3].visible" />
+      <el-table-column label="类型" align="center" prop="type" v-if="columns[4].visible">
+        <template slot-scope="scope">
+          <el-tag type="danger" v-if="scope.row.type == 1">支出</el-tag>
+          <el-tag type="success" v-else>收入</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="交易时间" align="center" prop="transactionTime" v-if="columns[5].visible" width="180">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.transactionTime) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="备注" align="center" prop="note" v-if="columns[6].visible" :show-overflow-tooltip="true" />
+      <el-table-column label="票据" align="center" prop="imagePath" v-if="columns[7].visible" width="100">
+        <template slot-scope="scope">
+          <el-image 
+            v-if="scope.row.imagePath"
+            style="width: 50px; height: 50px"
+            :src="scope.row.imagePath.startsWith('http') ? scope.row.imagePath : getImageUrl(scope.row.imagePath)" 
+            :preview-src-list="scope.row.imagePath ? [scope.row.imagePath.startsWith('http') ? scope.row.imagePath : getImageUrl(scope.row.imagePath)] : []"
+            fit="cover">
+            <div slot="error" class="image-slot">
+              <i class="el-icon-picture-outline"></i>
+            </div>
+          </el-image>
+          <span v-else>无</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" align="center" width="160" class-name="small-padding fixed-width">
+        <template slot-scope="scope">
+          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['finance:transaction:edit']">修改</el-button>
+          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['finance:transaction:remove']">删除</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize" @pagination="getList" />
+
+    <!-- 添加或修改交易记录对话框 -->
+    <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
+      <el-form ref="form" :model="form" :rules="rules" label-width="100px">
+        <el-form-item label="类型" prop="type">
+          <el-radio-group v-model="form.type" @change="handleTypeChange">
+            <el-radio :label="1">支出</el-radio>
+            <el-radio :label="2">收入</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="分类" prop="categoryId">
+          <el-select v-model="form.categoryId" placeholder="请选择分类" style="width: 100%">
+            <el-option
+              v-for="item in currentCategoryOptions"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
+            >
+              <span><i :class="'el-icon-' + item.icon" :style="{color: item.color}"></i> {{ item.name }}</span>
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="金额" prop="amount">
+          <el-input-number v-model="form.amount" :min="0.01" :precision="2" :step="1" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="交易时间" prop="transactionTime">
+          <el-date-picker
+            v-model="form.transactionTime"
+            type="datetime"
+            placeholder="选择日期时间"
+            style="width: 100%"
+            value-format="timestamp"
+          ></el-date-picker>
+        </el-form-item>
+        <el-form-item label="备注" prop="note">
+          <el-input v-model="form.note" type="textarea" placeholder="请输入备注" />
+        </el-form-item>
+        <el-form-item label="票据图片" prop="imagePath">
+          <el-upload
+            ref="upload"
+            :limit="1"
+            accept=".jpg, .png, .jpeg"
+            :action="upload.url"
+            :headers="upload.headers"
+            :file-list="upload.fileList"
+            :on-progress="handleFileUploadProgress"
+            :on-success="handleFileSuccess"
+            :on-error="handleUploadError"
+            :on-exceed="handleExceed"
+            :on-remove="handleRemove"
+            :on-preview="handlePictureCardPreview"
+            :before-upload="handleBeforeUpload"
+            list-type="picture-card"
+            :class="{hide: upload.fileList.length >= 1}">
+            <i class="el-icon-plus"></i>
+          </el-upload>
+          <!-- 上传提示 -->
+          <div class="el-upload__tip" slot="tip">只能上传jpg/png/jpeg文件，且不超过5MB</div>
+          
+          <el-dialog
+            :visible.sync="dialogVisible"
+            title="预览"
+            width="800"
+            append-to-body
+          >
+            <img
+              :src="dialogImageUrl"
+              style="display: block; max-width: 100%; margin: 0 auto"
+            />
+          </el-dialog>
+        </el-form-item>
+        <el-form-item label="位置信息" prop="location">
+          <el-input v-model="form.location" placeholder="请输入位置信息" />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="submitForm">确 定</el-button>
+        <el-button @click="cancel">取 消</el-button>
+      </div>
+    </el-dialog>
+    
+    <!-- 统计图表对话框 -->
+    <el-dialog title="交易统计" :visible.sync="statOpen" width="900px" append-to-body>
+      <el-tabs v-model="activeTab">
+        <el-tab-pane label="月度收支统计" name="month">
+          <div class="stat-header">
+            <el-date-picker
+              v-model="statMonth"
+              type="month"
+              placeholder="选择月份"
+              @change="handleMonthChange"
+              value-format="yyyy-MM"
+            ></el-date-picker>
+            <div class="stat-summary">
+              <div class="stat-item">
+                <div class="stat-label">支出</div>
+                <div class="stat-value expense">{{ formatAmount(monthSummary.expense) }}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">收入</div>
+                <div class="stat-value income">{{ formatAmount(monthSummary.income) }}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">结余</div>
+                <div class="stat-value" :class="{ 'income': monthSummary.balance >= 0, 'expense': monthSummary.balance < 0 }">
+                  {{ formatAmount(monthSummary.balance) }}
+                </div>
+              </div>
+            </div>
+          </div>
+          <el-tabs v-model="chartTab" @tab-click="handleChartTabChange">
+            <el-tab-pane label="支出分类" name="expense">
+              <div id="expenseChart" class="chart"></div>
+            </el-tab-pane>
+            <el-tab-pane label="收入分类" name="income">
+              <div id="incomeChart" class="chart"></div>
+            </el-tab-pane>
+          </el-tabs>
+        </el-tab-pane>
+        <el-tab-pane label="年度收支趋势" name="year">
+          <div class="stat-header">
+            <el-date-picker
+              v-model="statYear"
+              type="year"
+              placeholder="选择年份"
+              @change="handleYearChange"
+              value-format="yyyy"
+            ></el-date-picker>
+          </div>
+          <div id="yearChart" class="chart"></div>
+        </el-tab-pane>
+      </el-tabs>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import { listTransaction, getTransaction, delTransaction, addTransaction, updateTransaction, exportTransaction,
+  getMonthAmount, getMonthStat, getYearStat } from "@/api/finance/transaction";
+import { listCategoryByType } from "@/api/finance/category";
+import * as echarts from 'echarts';
+import ImageUpload from "@/components/ImageUpload";
+import { getToken } from "@/utils/auth";
+
+export default {
+  name: "Transaction",
+  components: {
+    ImageUpload
+  },
+  data() {
+    return {
+      // 遮罩层
+      loading: true,
+      // 选中数组
+      ids: [],
+      // 非单个禁用
+      single: true,
+      // 非多个禁用
+      multiple: true,
+      // 显示搜索条件
+      showSearch: true,
+      // 总条数
+      total: 0,
+      // 交易记录表格数据
+      transactionList: [],
+      // 弹出层标题
+      title: "",
+      // 是否显示弹出层
+      open: false,
+      // 是否显示统计对话框
+      statOpen: false,
+      // 统计图表当前选项卡
+      activeTab: 'month',
+      // 图表类型选项卡
+      chartTab: 'expense',
+      // 统计年份
+      statYear: new Date().getFullYear().toString(),
+      // 统计月份
+      statMonth: new Date().getFullYear() + '-' + (new Date().getMonth() + 1).toString().padStart(2, '0'),
+      // 月度收支汇总
+      monthSummary: {
+        expense: 0,
+        income: 0,
+        balance: 0
+      },
+      // 是否为管理员
+      isAdmin: false,
+      // 分类选项
+      categoryOptions: [],
+      // 当前类型对应的分类选项
+      currentCategoryOptions: [],
+      // 日期范围
+      dateRange: [],
+      // 表格展示的列
+      columns: [
+        { key: 0, label: "交易ID", visible: false },
+        { key: 1, label: "用户ID", visible: true },
+        { key: 2, label: "分类", visible: true },
+        { key: 3, label: "金额", visible: true },
+        { key: 4, label: "类型", visible: true },
+        { key: 5, label: "交易时间", visible: true },
+        { key: 6, label: "备注", visible: true },
+        { key: 7, label: "票据", visible: true }
+      ],
+      // 查询参数
+      queryParams: {
+        pageNum: 1,
+        pageSize: 10,
+        userId: undefined,
+        categoryId: undefined,
+        amount: undefined,
+        type: undefined,
+        note: undefined
+      },
+      // 表单参数
+      form: {},
+      // 表单校验
+      rules: {
+        type: [
+          { required: true, message: "交易类型不能为空", trigger: "change" }
+        ],
+        categoryId: [
+          { required: true, message: "交易分类不能为空", trigger: "change" }
+        ],
+        amount: [
+          { required: true, message: "交易金额不能为空", trigger: "blur" }
+        ],
+        transactionTime: [
+          { required: true, message: "交易时间不能为空", trigger: "blur" }
+        ]
+      },
+      // 图表实例
+      expenseChart: null,
+      incomeChart: null,
+      yearChart: null,
+      // 上传参数
+      upload: {
+        // 是否禁用上传
+        isUploading: false,
+        // 设置上传的请求头部
+        headers: { Authorization: "Bearer " + getToken() },
+        // 上传的地址
+        url: process.env.VUE_APP_BASE_API + "/common/upload",
+        // 上传的文件列表
+        fileList: []
+      },
+      dialogVisible: false,
+      dialogImageUrl: ''
+    };
+  },
+  created() {
+    this.getList();
+    this.getCategoryOptions();
+    this.isAdmin = this.$store.getters.roles.includes("admin");
+  },
+  methods: {
+    /** 获取图片完整URL */
+    getImageUrl(path) {
+      if (!path) return '';
+      if (path.startsWith('http')) return path;
+      return process.env.VUE_APP_BASE_API + path;
+    },
+    /** 查询交易记录列表 */
+    getList() {
+      this.loading = true;
+      
+      // 处理交易时间范围查询参数
+      if (this.dateRange && this.dateRange.length === 2) {
+        this.queryParams.params = {
+          beginTime: this.dateRange[0],
+          endTime: this.dateRange[1]
+        };
+      } else {
+        this.queryParams.params = {};
+      }
+      
+      listTransaction(this.queryParams).then(response => {
+        this.transactionList = response.rows;
+        this.total = response.total;
+        this.loading = false;
+      });
+    },
+    /** 获取分类选项 */
+    getCategoryOptions() {
+      // 获取支出分类
+      listCategoryByType(1).then(response => {
+        const expenseCategories = response.data || [];
+        
+        // 获取收入分类
+        listCategoryByType(2).then(response => {
+          const incomeCategories = response.data || [];
+          this.categoryOptions = [...expenseCategories, ...incomeCategories];
+          
+          // 设置当前类型对应的分类，默认为支出分类
+          this.handleTypeChange(this.form.type || 1);
+        });
+      });
+    },
+    // 类型发生变化时，更新可选分类
+    handleTypeChange(type) {
+      this.currentCategoryOptions = this.categoryOptions.filter(item => item.type === type);
+    },
+    // 取消按钮
+    cancel() {
+      this.open = false;
+      this.reset();
+    },
+    // 表单重置
+    reset() {
+      this.form = {
+        id: undefined,
+        userId: undefined,
+        categoryId: undefined,
+        amount: undefined,
+        type: 1,
+        transactionTime: new Date().getTime(),
+        note: undefined,
+        location: undefined,
+        syncState: 0
+      };
+      this.resetForm("form");
+      this.handleTypeChange(1);
+    },
+    /** 搜索按钮操作 */
+    handleQuery() {
+      this.queryParams.pageNum = 1;
+      this.getList();
+    },
+    /** 重置按钮操作 */
+    resetQuery() {
+      this.dateRange = [];
+      this.resetForm("queryForm");
+      this.handleQuery();
+    },
+    // 多选框选中数据
+    handleSelectionChange(selection) {
+      this.ids = selection.map(item => item.id);
+      this.single = selection.length !== 1;
+      this.multiple = !selection.length;
+    },
+    /** 新增按钮操作 */
+    handleAdd() {
+      this.reset();
+      this.upload.fileList = [];
+      this.open = true;
+      this.title = "添加交易记录";
+    },
+    /** 修改按钮操作 */
+    handleUpdate(row) {
+      this.reset();
+      const id = row.id || this.ids[0];
+      getTransaction(id).then(response => {
+        this.form = response.data;
+        // 如果图片路径不是完整URL，补全路径
+        if (this.form.imagePath && !this.form.imagePath.startsWith('http')) {
+          this.upload.fileList = [{ name: this.getFileName(this.form.imagePath), url: this.getImageUrl(this.form.imagePath) }];
+        } else if (this.form.imagePath) {
+          this.upload.fileList = [{ name: this.getFileName(this.form.imagePath), url: this.form.imagePath }];
+        } else {
+          this.upload.fileList = [];
+        }
+        this.handleTypeChange(this.form.type);
+        this.open = true;
+        this.title = "修改交易记录";
+      });
+    },
+    /** 提交按钮 */
+    submitForm() {
+      this.$refs["form"].validate(valid => {
+        if (valid) {
+          if (this.upload.isUploading) {
+            this.$modal.msgWarning("图片正在上传中，请等待上传完成后再提交");
+            return;
+          }
+          
+          if (this.form.id != null) {
+            updateTransaction(this.form).then(response => {
+              this.$modal.msgSuccess("修改成功");
+              this.open = false;
+              this.getList();
+            });
+          } else {
+            addTransaction(this.form).then(response => {
+              this.$modal.msgSuccess("新增成功");
+              this.open = false;
+              this.getList();
+            });
+          }
+        }
+      });
+    },
+    /** 删除按钮操作 */
+    handleDelete(row) {
+      const ids = row.id || this.ids;
+      this.$modal.confirm('是否确认删除交易记录编号为"' + ids + '"的数据项？').then(function() {
+        return delTransaction(ids);
+      }).then(() => {
+        this.getList();
+        this.$modal.msgSuccess("删除成功");
+      }).catch(() => {});
+    },
+    /** 导出按钮操作 */
+    handleExport() {
+      this.download('finance/transaction/export', {
+        ...this.queryParams
+      }, `transaction_${new Date().getTime()}.xlsx`);
+    },
+    /** 统计按钮操作 */
+    handleStatistics() {
+      this.statOpen = true;
+      this.activeTab = 'month';
+      this.chartTab = 'expense';
+      
+      // 初始化统计数据
+      this.loadMonthSummary();
+      this.loadMonthStat();
+      
+      // 延迟加载图表，确保DOM已渲染
+      this.$nextTick(() => {
+        this.initCharts();
+      });
+    },
+    /** 初始化图表 */
+    initCharts() {
+      // 如果图表实例已存在，先销毁
+      if (this.expenseChart) {
+        this.expenseChart.dispose();
+      }
+      if (this.incomeChart) {
+        this.incomeChart.dispose();
+      }
+      if (this.yearChart) {
+        this.yearChart.dispose();
+      }
+      
+      // 初始化支出分类图表
+      this.expenseChart = echarts.init(document.getElementById('expenseChart'));
+      
+      // 初始化收入分类图表
+      this.incomeChart = echarts.init(document.getElementById('incomeChart'));
+      
+      // 初始化年度趋势图表
+      this.yearChart = echarts.init(document.getElementById('yearChart'));
+      
+      // 加载年度数据
+      this.loadYearStat();
+    },
+    /** 加载月度收支汇总 */
+    loadMonthSummary() {
+      const year = parseInt(this.statMonth.split('-')[0]);
+      const month = parseInt(this.statMonth.split('-')[1]);
+      
+      // 计算月初和月末时间戳
+      const startDate = new Date(year, month - 1, 1);
+      const endDate = new Date(year, month, 0, 23, 59, 59);
+      
+      const startTime = startDate.getTime();
+      const endTime = endDate.getTime();
+      
+      getMonthAmount(this.$store.getters.userId, startTime, endTime).then(response => {
+        this.monthSummary = response.data || { expense: 0, income: 0, balance: 0 };
+      });
+    },
+    /** 加载月度分类统计 */
+    loadMonthStat() {
+      const year = parseInt(this.statMonth.split('-')[0]);
+      const month = parseInt(this.statMonth.split('-')[1]);
+      
+      // 计算月初和月末时间戳
+      const startDate = new Date(year, month - 1, 1);
+      const endDate = new Date(year, month, 0, 23, 59, 59);
+      
+      const startTime = startDate.getTime();
+      const endTime = endDate.getTime();
+      
+      // 加载支出分类统计
+      getMonthStat(this.$store.getters.userId, startTime, endTime, 1).then(response => {
+        const data = response.data || [];
+        this.updatePieChart(this.expenseChart, data, '支出分类占比');
+      });
+      
+      // 加载收入分类统计
+      getMonthStat(this.$store.getters.userId, startTime, endTime, 2).then(response => {
+        const data = response.data || [];
+        this.updatePieChart(this.incomeChart, data, '收入分类占比');
+      });
+    },
+    /** 加载年度统计 */
+    loadYearStat() {
+      getYearStat(this.$store.getters.userId, parseInt(this.statYear)).then(response => {
+        const data = response.data || [];
+        
+        // 准备图表数据
+        const months = [];
+        const expenses = [];
+        const incomes = [];
+        
+        // 填充月份数据，确保12个月都有数据
+        for (let i = 1; i <= 12; i++) {
+          const monthData = data.find(item => item.month === i) || { month: i, expense: 0, income: 0 };
+          months.push(i + '月');
+          expenses.push(parseFloat(monthData.expense) || 0);
+          incomes.push(parseFloat(monthData.income) || 0);
+        }
+        
+        // 更新年度趋势图
+        this.yearChart.setOption({
+          title: {
+            text: this.statYear + '年收支趋势',
+            left: 'center'
+          },
+          tooltip: {
+            trigger: 'axis',
+            formatter: function(params) {
+              let result = params[0].name + '<br/>';
+              params.forEach(item => {
+                result += item.seriesName + ': ' + item.value.toFixed(2) + '<br/>';
+              });
+              return result;
+            }
+          },
+          legend: {
+            data: ['支出', '收入'],
+            bottom: '5%'
+          },
+          grid: {
+            left: '3%',
+            right: '4%',
+            bottom: '15%',
+            containLabel: true
+          },
+          xAxis: {
+            type: 'category',
+            data: months
+          },
+          yAxis: {
+            type: 'value',
+            axisLabel: {
+              formatter: '{value} 元'
+            }
+          },
+          series: [
+            {
+              name: '支出',
+              type: 'line',
+              data: expenses,
+              itemStyle: {
+                color: '#f56c6c'
+              }
+            },
+            {
+              name: '收入',
+              type: 'line',
+              data: incomes,
+              itemStyle: {
+                color: '#67c23a'
+              }
+            }
+          ]
+        });
+      });
+    },
+    /** 更新饼图 */
+    updatePieChart(chart, data, title) {
+      const chartData = data.map(item => ({
+        name: item.category_name,
+        value: parseFloat(item.amount),
+        itemStyle: {
+          color: item.color
+        }
+      }));
+      
+      chart.setOption({
+        title: {
+          text: title,
+          left: 'center'
+        },
+        tooltip: {
+          trigger: 'item',
+          formatter: '{b}: {c} ({d}%)'
+        },
+        legend: {
+          orient: 'vertical',
+          left: 'left',
+          data: chartData.map(item => item.name)
+        },
+        series: [
+          {
+            name: title,
+            type: 'pie',
+            radius: '55%',
+            center: ['50%', '60%'],
+            data: chartData,
+            emphasis: {
+              itemStyle: {
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowColor: 'rgba(0, 0, 0, 0.5)'
+              }
+            }
+          }
+        ]
+      });
+    },
+    /** 格式化金额 */
+    formatAmount(amount) {
+      return parseFloat(amount).toFixed(2) + ' 元';
+    },
+    /** 月份变化事件 */
+    handleMonthChange() {
+      this.loadMonthSummary();
+      this.loadMonthStat();
+    },
+    /** 年份变化事件 */
+    handleYearChange() {
+      this.loadYearStat();
+    },
+    /** 图表选项卡切换事件 */
+    handleChartTabChange() {
+      this.$nextTick(() => {
+        if (this.chartTab === 'expense') {
+          this.expenseChart && this.expenseChart.resize();
+        } else {
+          this.incomeChart && this.incomeChart.resize();
+        }
+      });
+    },
+    /** 获取文件名 */
+    getFileName(path) {
+      if (!path) return '';
+      return path.substring(path.lastIndexOf("/") + 1);
+    },
+    // 文件提交处理
+    submitUpload() {
+      this.$refs.upload.submit();
+    },
+    // 文件上传中处理
+    handleFileUploadProgress(event, file, fileList) {
+      this.upload.isUploading = true;
+    },
+    // 文件上传成功处理
+    handleFileSuccess(response, file, fileList) {
+      this.upload.isUploading = false;
+      this.form.imagePath = response.url;
+      this.$modal.msgSuccess(response.msg || "上传成功");
+    },
+    handleUploadError(error, file) {
+      this.$modal.msgError("上传失败，请检查网络连接或文件格式");
+    },
+    handleExceed(files, fileList) {
+      this.$modal.msgWarning("只能上传一个文件，请先删除已上传的文件");
+    },
+    handleRemove(file, fileList) {
+      this.upload.fileList = fileList;
+    },
+    handlePictureCardPreview(file) {
+      this.dialogImageUrl = file.url;
+      this.dialogVisible = true;
+    },
+    handleBeforeUpload(file) {
+      const isJPG = file.type === 'image/jpeg';
+      const isPNG = file.type === 'image/png';
+      const isJPEG = file.type === 'image/jpg';
+      const isLt5M = file.size / 1024 / 1024 < 5;
+
+      if (!isJPG && !isPNG && !isJPEG) {
+        this.$modal.msgWarning('上传文件必须是 jpg/png/jpeg 格式!');
+      }
+      if (!isLt5M) {
+        this.$modal.msgWarning('上传文件大小不能超过 5MB!');
+      }
+      return isJPG || isPNG || isJPEG && isLt5M;
+    }
+  }
+};
+</script>
+
+<style scoped>
+.chart {
+  width: 100%;
+  height: 400px;
+}
+.stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.stat-summary {
+  display: flex;
+  gap: 30px;
+}
+.stat-item {
+  text-align: center;
+}
+.stat-label {
+  font-size: 14px;
+  color: #606266;
+}
+.stat-value {
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 5px;
+}
+.expense {
+  color: #f56c6c;
+}
+.income {
+  color: #67c23a;
+}
+
+.image-slot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background: #f5f7fa;
+  color: #909399;
+  font-size: 18px;
+}
+
+.image-preview {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+}
+
+/* 上传组件样式 */
+::v-deep .hide .el-upload--picture-card {
+  display: none;
+}
+</style> 

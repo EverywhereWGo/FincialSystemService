@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.finance.FinUserMapper">
+    
+    <resultMap type="com.ruoyi.system.domain.finance.FinUser" id="FinUserResult">
+        <result property="id"     column="id"     />
+        <result property="username"     column="username"     />
+        <result property="password"   column="password"   />
+        <result property="salt"   column="salt"   />
+        <result property="nickname"   column="nickname"   />
+        <result property="name"   column="name"   />
+        <result property="email"   column="email"   />
+        <result property="phone"   column="phone"   />
+        <result property="role"   column="role"   />
+        <result property="failedAttempts"   column="failed_attempts"   />
+        <result property="lockedUntil"   column="locked_until"   />
+        <result property="wechat"   column="wechat"   />
+        <result property="qq"   column="qq"   />
+        <result property="delFlag"   column="del_flag"   />
+        <result property="createBy"   column="create_by"   />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy"   column="update_by"   />
+        <result property="updateTime" column="update_time" />
+        <result property="lastLoginTime" column="last_login_time" />
+        <result property="remark"     column="remark"     />
+    </resultMap>
+
+    <sql id="selectFinUserVo">
+        select id, username, password, salt, nickname, name, email, phone, role, failed_attempts, locked_until, 
+        wechat, qq, del_flag, create_by, create_time, update_by, update_time, last_login_time, remark
+        from fin_users
+    </sql>
+
+    <select id="selectFinUserList" parameterType="com.ruoyi.system.domain.finance.FinUser" resultMap="FinUserResult">
+        <include refid="selectFinUserVo"/>
+        <where>  
+            del_flag = '0'
+            <if test="username != null  and username != ''"> and username like concat('%', #{username}, '%')</if>
+            <if test="nickname != null  and nickname != ''"> and nickname like concat('%', #{nickname}, '%')</if>
+            <if test="name != null  and name != ''"> and name like concat('%', #{name}, '%')</if>
+            <if test="email != null  and email != ''"> and email like concat('%', #{email}, '%')</if>
+            <if test="phone != null  and phone != ''"> and phone like concat('%', #{phone}, '%')</if>
+            <if test="role != null  and role != ''"> and role = #{role}</if>
+        </where>
+    </select>
+    
+    <select id="selectFinUserById" parameterType="Long" resultMap="FinUserResult">
+        <include refid="selectFinUserVo"/>
+        where id = #{id} and del_flag = '0'
+    </select>
+    
+    <select id="selectFinUserByUsername" parameterType="String" resultMap="FinUserResult">
+        <include refid="selectFinUserVo"/>
+        where username = #{username} and del_flag = '0'
+    </select>
+    
+    <select id="selectFinUserByPhone" parameterType="String" resultMap="FinUserResult">
+        <include refid="selectFinUserVo"/>
+        where phone = #{phone} and del_flag = '0'
+    </select>
+    
+    <select id="selectFinUserByEmail" parameterType="String" resultMap="FinUserResult">
+        <include refid="selectFinUserVo"/>
+        where email = #{email} and del_flag = '0'
+    </select>
+    
+    <select id="checkUsernameUnique" parameterType="String" resultType="int">
+        select count(1) from fin_users where username = #{username} and del_flag = '0'
+    </select>
+    
+    <select id="checkPhoneUnique" parameterType="String" resultType="int">
+        select count(1) from fin_users where phone = #{phone} and del_flag = '0'
+    </select>
+    
+    <select id="checkEmailUnique" parameterType="String" resultType="int">
+        select count(1) from fin_users where email = #{email} and del_flag = '0'
+    </select>
+        
+    <insert id="insertFinUser" parameterType="com.ruoyi.system.domain.finance.FinUser" useGeneratedKeys="true" keyProperty="id">
+        insert into fin_users
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="username != null">username,</if>
+            <if test="password != null">password,</if>
+            <if test="salt != null">salt,</if>
+            <if test="nickname != null">nickname,</if>
+            <if test="name != null">name,</if>
+            <if test="email != null">email,</if>
+            <if test="phone != null">phone,</if>
+            <if test="role != null">role,</if>
+            <if test="failedAttempts != null">failed_attempts,</if>
+            <if test="lockedUntil != null">locked_until,</if>
+            <if test="wechat != null">wechat,</if>
+            <if test="qq != null">qq,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="lastLoginTime != null">last_login_time,</if>
+            <if test="remark != null">remark,</if>
+            del_flag,
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="username != null">#{username},</if>
+            <if test="password != null">#{password},</if>
+            <if test="salt != null">#{salt},</if>
+            <if test="nickname != null">#{nickname},</if>
+            <if test="name != null">#{name},</if>
+            <if test="email != null">#{email},</if>
+            <if test="phone != null">#{phone},</if>
+            <if test="role != null">#{role},</if>
+            <if test="failedAttempts != null">#{failedAttempts},</if>
+            <if test="lockedUntil != null">#{lockedUntil},</if>
+            <if test="wechat != null">#{wechat},</if>
+            <if test="qq != null">#{qq},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="lastLoginTime != null">#{lastLoginTime},</if>
+            <if test="remark != null">#{remark},</if>
+            '0',
+         </trim>
+    </insert>
+    
+    <update id="updateFinUser" parameterType="com.ruoyi.system.domain.finance.FinUser">
+        update fin_users
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="nickname != null">nickname = #{nickname},</if>
+            <if test="name != null">name = #{name},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="role != null">role = #{role},</if>
+            <if test="wechat != null">wechat = #{wechat},</if>
+            <if test="qq != null">qq = #{qq},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = sysdate(),
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where id = #{id}
+    </update>
+    
+    <update id="resetFinUserPwd" parameterType="com.ruoyi.system.domain.finance.FinUser">
+        update fin_users
+        set 
+            password = #{password},
+            <if test="salt != null">salt = #{salt},</if>
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where id = #{id}
+    </update>
+    
+    <update id="updateFinUserLoginInfo" parameterType="com.ruoyi.system.domain.finance.FinUser">
+        update fin_users
+        <trim prefix="SET" suffixOverrides=",">
+            last_login_time = sysdate(),
+            <if test="failedAttempts != null">failed_attempts = #{failedAttempts},</if>
+            <if test="lockedUntil != null">locked_until = #{lockedUntil},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteFinUserById" parameterType="Long">
+        update fin_users set del_flag = '2' where id = #{id}
+    </delete>
+
+    <delete id="deleteFinUserByIds" parameterType="Long">
+        update fin_users set del_flag = '2' where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    
+</mapper>

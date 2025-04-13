@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.finance.FinCategoryRuleMapper">
+    
+    <resultMap type="com.ruoyi.system.domain.finance.FinCategoryRule" id="FinCategoryRuleResult">
+        <result property="id"     column="id"     />
+        <result property="categoryId"     column="category_id"     />
+        <result property="categoryName"   column="category_name"   />
+        <result property="pattern"   column="pattern"   />
+        <result property="userId"   column="user_id"   />
+        <result property="delFlag"   column="del_flag"   />
+        <result property="createBy"   column="create_by"   />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy"   column="update_by"   />
+        <result property="updateTime" column="update_time" />
+        <result property="remark"     column="remark"     />
+    </resultMap>
+
+    <sql id="selectFinCategoryRuleVo">
+        select r.id, r.category_id, c.name as category_name, r.pattern, r.user_id, r.del_flag, r.create_by, r.create_time, r.update_by, r.update_time, r.remark
+        from fin_category_rules r
+        left join fin_categories c on r.category_id = c.id
+    </sql>
+
+    <select id="selectFinCategoryRuleList" parameterType="com.ruoyi.system.domain.finance.FinCategoryRule" resultMap="FinCategoryRuleResult">
+        <include refid="selectFinCategoryRuleVo"/>
+        <where>  
+            r.del_flag = '0'
+            <if test="categoryId != null "> and r.category_id = #{categoryId}</if>
+            <if test="pattern != null  and pattern != ''"> and r.pattern like concat('%', #{pattern}, '%')</if>
+            <if test="userId != null "> and r.user_id = #{userId}</if>
+        </where>
+    </select>
+    
+    <select id="selectFinCategoryRuleById" parameterType="Long" resultMap="FinCategoryRuleResult">
+        <include refid="selectFinCategoryRuleVo"/>
+        where r.id = #{id} and r.del_flag = '0'
+    </select>
+    
+    <select id="selectAllCategoryRules" resultMap="FinCategoryRuleResult">
+        <include refid="selectFinCategoryRuleVo"/>
+        where r.del_flag = '0'
+    </select>
+    
+    <select id="matchCategoryByDescription" parameterType="String" resultMap="FinCategoryRuleResult">
+        <include refid="selectFinCategoryRuleVo"/>
+        <where>
+            r.del_flag = '0'
+            <foreach collection="#{description}" item="item" index="index">
+                <if test="item != null and item != ''">
+                    or r.pattern like concat('%', #{item}, '%')
+                </if>
+            </foreach>
+        </where>
+        limit 1
+    </select>
+        
+    <insert id="insertFinCategoryRule" parameterType="com.ruoyi.system.domain.finance.FinCategoryRule" useGeneratedKeys="true" keyProperty="id">
+        insert into fin_category_rules
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="categoryId != null">category_id,</if>
+            <if test="pattern != null">pattern,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+            del_flag,
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="categoryId != null">#{categoryId},</if>
+            <if test="pattern != null">#{pattern},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+            '0',
+         </trim>
+    </insert>
+    
+    <update id="updateFinCategoryRule" parameterType="com.ruoyi.system.domain.finance.FinCategoryRule">
+        update fin_category_rules
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="categoryId != null">category_id = #{categoryId},</if>
+            <if test="pattern != null">pattern = #{pattern},</if>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = sysdate(),
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteFinCategoryRuleById" parameterType="Long">
+        update fin_category_rules set del_flag = '2' where id = #{id}
+    </delete>
+
+    <delete id="deleteFinCategoryRuleByIds" parameterType="Long">
+        update fin_category_rules set del_flag = '2' where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    
+</mapper>

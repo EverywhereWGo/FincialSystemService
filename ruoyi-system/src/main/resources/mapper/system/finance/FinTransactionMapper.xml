@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.finance.FinTransactionMapper">
+    
+    <resultMap type="FinTransaction" id="FinTransactionResult">
+        <result property="id"                column="id"                />
+        <result property="userId"            column="user_id"           />
+        <result property="categoryId"        column="category_id"       />
+        <result property="categoryName"      column="category_name"     />
+        <result property="amount"            column="amount"            />
+        <result property="type"              column="type"              />
+        <result property="transactionTime"   column="transaction_time"  />
+        <result property="note"              column="note"              />
+        <result property="imagePath"         column="image_path"        />
+        <result property="location"          column="location"          />
+        <result property="syncState"         column="sync_state"        />
+        <result property="delFlag"           column="del_flag"          />
+        <result property="createBy"          column="create_by"         />
+        <result property="createTime"        column="create_time"       />
+        <result property="updateBy"          column="update_by"         />
+        <result property="updateTime"        column="update_time"       />
+        <result property="remark"            column="remark"            />
+    </resultMap>
+
+    <sql id="selectFinTransactionVo">
+        select t.id, t.user_id, t.category_id, c.name as category_name, t.amount, t.type, 
+        t.transaction_time, t.note, t.image_path, t.location, t.sync_state, t.del_flag, 
+        t.create_by, t.create_time, t.update_by, t.update_time, t.remark
+        from fin_transactions t
+        left join fin_categories c on t.category_id = c.id
+    </sql>
+
+    <!-- 查询财务交易记录列表 -->
+    <select id="selectFinTransactionList" parameterType="FinTransaction" resultMap="FinTransactionResult">
+        <include refid="selectFinTransactionVo"/>
+        <where>  
+            t.del_flag = '0'
+            <if test="userId != null">
+                AND t.user_id = #{userId}
+            </if>
+            <if test="categoryId != null">
+                AND t.category_id = #{categoryId}
+            </if>
+            <if test="type != null and type != ''">
+                AND t.type = #{type}
+            </if>
+            <if test="note != null and note != ''">
+                AND t.note like concat('%', #{note}, '%')
+            </if>
+            <if test="amount != null">
+                AND t.amount = #{amount}
+            </if>
+            <if test="params.beginTime != null and params.beginTime != ''">
+                AND t.transaction_time &gt;= #{params.beginTime}
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                AND t.transaction_time &lt;= #{params.endTime}
+            </if>
+            <if test="syncState != null">
+                AND t.sync_state = #{syncState}
+            </if>
+        </where>
+        order by t.transaction_time desc
+    </select>
+    
+    <!-- 查询财务交易记录详情 -->
+    <select id="selectFinTransactionById" parameterType="Long" resultMap="FinTransactionResult">
+        <include refid="selectFinTransactionVo"/>
+        where t.id = #{id} and t.del_flag = '0'
+    </select>
+    
+    <!-- 根据用户ID查询交易记录 -->
+    <select id="selectFinTransactionByUserId" parameterType="Long" resultMap="FinTransactionResult">
+        <include refid="selectFinTransactionVo"/>
+        where t.user_id = #{userId} and t.del_flag = '0'
+        order by t.transaction_time desc
+    </select>
+    
+    <!-- 根据分类ID查询交易记录 -->
+    <select id="selectFinTransactionByCategoryId" parameterType="Long" resultMap="FinTransactionResult">
+        <include refid="selectFinTransactionVo"/>
+        where t.category_id = #{categoryId} and t.del_flag = '0'
+        order by t.transaction_time desc
+    </select>
+    
+    <!-- 查询用户某月的交易记录 -->
+    <select id="selectFinTransactionByMonth" parameterType="Map" resultMap="FinTransactionResult">
+        <include refid="selectFinTransactionVo"/>
+        where t.user_id = #{userId}
+        and t.transaction_time &gt;= #{startTime}
+        and t.transaction_time &lt;= #{endTime}
+        <if test="type != null">
+            and t.type = #{type}
+        </if>
+        and t.del_flag = '0'
+        order by t.transaction_time desc
+    </select>
+    
+    <!-- 查询用户某年的消费统计 -->
+    <select id="selectFinTransactionStatByYear" parameterType="Map" resultType="Map">
+        select 
+            DATE_FORMAT(FROM_UNIXTIME(transaction_time/1000), '%c') as month,
+            sum(case when type = 1 then amount else 0 end) as expense,
+            sum(case when type = 2 then amount else 0 end) as income
+        from fin_transactions
+        where user_id = #{userId}
+        and DATE_FORMAT(FROM_UNIXTIME(transaction_time/1000), '%Y') = #{year}
+        and del_flag = '0'
+        group by month
+        order by month
+    </select>
+    
+    <!-- 查询用户某月的消费统计 -->
+    <select id="selectFinTransactionStatByMonth" parameterType="Map" resultType="Map">
+        select 
+            c.id as categoryId,
+            c.name as categoryName,
+            sum(t.amount) as amount,
+            count(t.id) as count
+        from fin_transactions t
+        left join fin_categories c on t.category_id = c.id
+        where t.user_id = #{userId}
+        and t.transaction_time &gt;= #{startTime}
+        and t.transaction_time &lt;= #{endTime}
+        and t.type = #{type}
+        and t.del_flag = '0'
+        group by c.id, c.name
+        order by amount desc
+    </select>
+    
+    <!-- 查询用户某月的支出总额 -->
+    <select id="selectExpenseAmountByMonth" parameterType="Map" resultType="BigDecimal">
+        select IFNULL(sum(amount), 0)
+        from fin_transactions
+        where user_id = #{userId}
+        and transaction_time &gt;= #{startTime}
+        and transaction_time &lt;= #{endTime}
+        and type = #{type}
+        and del_flag = '0'
+    </select>
+    
+    <!-- 查询用户某月某分类的支出总额 -->
+    <select id="selectExpenseAmountByCategoryAndMonth" parameterType="Map" resultType="BigDecimal">
+        select IFNULL(sum(amount), 0)
+        from fin_transactions
+        where user_id = #{userId}
+        and category_id = #{categoryId}
+        and transaction_time &gt;= #{startTime}
+        and transaction_time &lt;= #{endTime}
+        and type = #{type}
+        and del_flag = '0'
+    </select>
+    
+    <!-- 查询用户某月的收入总额 -->
+    <select id="selectIncomeAmountByMonth" parameterType="Map" resultType="BigDecimal">
+        select IFNULL(sum(amount), 0)
+        from fin_transactions
+        where user_id = #{userId}
+        and transaction_time &gt;= #{startTime}
+        and transaction_time &lt;= #{endTime}
+        and type = 2
+        and del_flag = '0'
+    </select>
+    
+    <!-- 按分类统计交易情况 -->
+    <select id="selectFinTransactionStatByCategory" parameterType="Map" resultType="Map">
+        select 
+            c.id as categoryId,
+            c.name as categoryName,
+            sum(t.amount) as amount,
+            count(t.id) as count
+        from fin_transactions t
+        left join fin_categories c on t.category_id = c.id
+        where t.user_id = #{userId}
+        and t.transaction_time &gt;= #{startTime}
+        and t.transaction_time &lt;= #{endTime}
+        and t.type = #{type}
+        and t.del_flag = '0'
+        group by c.id, c.name
+        order by amount desc
+    </select>
+    
+    <!-- 获取收支趋势 -->
+    <select id="selectFinTransactionTrend" parameterType="Map" resultType="Map">
+        select 
+            DATE_FORMAT(FROM_UNIXTIME(transaction_time/1000), '%Y-%m') as month,
+            sum(case when type = 1 then amount else 0 end) as expense,
+            sum(case when type = 2 then amount else 0 end) as income
+        from fin_transactions
+        where user_id = #{userId}
+        and del_flag = '0'
+        and transaction_time >= DATE_SUB(CURDATE(), INTERVAL #{months} MONTH)
+        group by month
+        order by month
+    </select>
+    
+    <!-- 获取金额最高的交易记录 -->
+    <select id="selectTopTransactions" parameterType="Map" resultType="Map">
+        select 
+            t.id,
+            t.amount,
+            t.transaction_time as transactionTime,
+            t.note,
+            c.name as categoryName
+        from fin_transactions t
+        left join fin_categories c on t.category_id = c.id
+        where t.user_id = #{userId}
+        and t.transaction_time &gt;= #{startTime}
+        and t.transaction_time &lt;= #{endTime}
+        and t.type = #{type}
+        and t.del_flag = '0'
+        order by t.amount desc
+        limit #{limit}
+    </select>
+    
+    <!-- 新增财务交易记录 -->
+    <insert id="insertFinTransaction" parameterType="FinTransaction" useGeneratedKeys="true" keyProperty="id">
+        insert into fin_transactions (
+            user_id,
+            category_id,
+            amount,
+            type,
+            transaction_time,
+            note,
+            image_path,
+            location,
+            sync_state,
+            del_flag,
+            create_by,
+            create_time,
+            remark
+        ) values (
+            #{userId},
+            #{categoryId},
+            #{amount},
+            #{type},
+            #{transactionTime},
+            #{note},
+            #{imagePath},
+            #{location},
+            #{syncState},
+            '0',
+            #{createBy},
+            sysdate(),
+            #{remark}
+        )
+    </insert>
+    
+    <!-- 修改交易记录 -->
+    <update id="updateFinTransaction" parameterType="FinTransaction">
+        update fin_transactions
+        <set>
+            <if test="categoryId != null">category_id = #{categoryId},</if>
+            <if test="amount != null">amount = #{amount},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="transactionTime != null">transaction_time = #{transactionTime},</if>
+            <if test="note != null">note = #{note},</if>
+            <if test="imagePath != null">image_path = #{imagePath},</if>
+            <if test="location != null">location = #{location},</if>
+            <if test="syncState != null">sync_state = #{syncState},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate(),
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where id = #{id}
+    </update>
+    
+    <!-- 删除交易记录 -->
+    <update id="deleteFinTransactionById" parameterType="Long">
+        update fin_transactions set del_flag = '2' where id = #{id}
+    </update>
+    
+    <!-- 批量删除交易记录 -->
+    <update id="deleteFinTransactionByIds" parameterType="Long">
+        update fin_transactions set del_flag = '2' where id in 
+        <foreach collection="array" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+    
+</mapper>

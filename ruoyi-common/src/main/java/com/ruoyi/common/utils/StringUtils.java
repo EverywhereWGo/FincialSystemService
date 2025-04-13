@@ -577,8 +577,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
     }
 
     /**
-     * 驼峰式命名法
-     * 例如：user_name->userName
+     * 下划线转驼峰命名
      */
     public static String toCamelCase(String s)
     {
@@ -704,6 +703,24 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
             {
                 sb.append(c);
             }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 生成指定长度的随机字符串
+     * 
+     * @param length 长度
+     * @return 随机字符串
+     */
+    public static String randomStr(int length) 
+    {
+        String str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < length; i++) 
+        {
+            int index = (int) (Math.random() * str.length());
+            sb.append(str.charAt(index));
         }
         return sb.toString();
     }

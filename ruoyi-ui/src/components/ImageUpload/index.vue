@@ -16,6 +16,7 @@
       :file-list="fileList"
       :on-preview="handlePictureCardPreview"
       :class="{hide: this.fileList.length >= this.limit}"
+      name="file"
     >
       <i class="el-icon-plus"></i>
     </el-upload>
