@@ -1,13 +1,13 @@
 # 项目相关配置
 ruoyi:
   # 名称
-  name: RuoYi
+  name: FinancialSystem
   # 版本
   version: 3.8.9
   # 版权年份
   copyrightYear: 2025
   # 文件路径 示例（ Windows配置D:/ruoyi/uploadPath，Linux配置 /home/ruoyi/uploadPath）
-  profile: D:/ruoyi/uploadPath
+  profile: D:/FinancialSystem/uploadPath
   # 获取ip地址开关
   addressEnabled: false
   # 验证码类型 math 数字计算 char 字符验证
@@ -82,9 +82,9 @@ spring:
     # 端口，默认为6379
     port: 6379
     # 数据库索引
-    database: 0
+    database: 1
     # 密码
-    password:
+    password: lmh123456
     # 连接超时时间
     timeout: 10s
     lettuce:

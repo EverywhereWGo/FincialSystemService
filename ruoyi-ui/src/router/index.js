@@ -41,18 +41,6 @@ export const constantRoutes = [
       {
         path: '/redirect/:path(.*)',
         component: () => import('@/views/redirect')
-      },
-      {
-        path: 'test-upload',
-        component: () => import('@/views/finance/transaction/test-upload'),
-        name: 'TestUpload',
-        meta: { title: '上传测试', icon: 'upload' }
-      },
-      {
-        path: 'pure-upload',
-        component: () => import('@/views/finance/transaction/pure-upload'),
-        name: 'PureUpload',
-        meta: { title: '纯上传测试', icon: 'upload' }
       }
     ]
   },
@@ -90,19 +78,6 @@ export const constantRoutes = [
     ]
   },
   {
-    path: '/upload-test',
-    component: Layout,
-    redirect: 'noredirect',
-    children: [
-      {
-        path: 'final',
-        component: () => import('@/views/finance/transaction/final-fix'),
-        name: 'FinalFix',
-        meta: { title: '上传测试（最终）', icon: 'upload' }
-      }
-    ]
-  },
-  {
     path: '/user',
     component: Layout,
     hidden: true,
@@ -117,9 +92,6 @@ export const constantRoutes = [
     ]
   }
 ]
-
-// 添加财务系统路由
-constantRoutes.push(...financeRoutes);
 
 // 动态路由，基于用户权限动态去加载
 export const dynamicRoutes = [

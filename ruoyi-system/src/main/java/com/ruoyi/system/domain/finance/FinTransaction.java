@@ -8,7 +8,7 @@ import com.ruoyi.common.core.domain.BaseEntity;
 
 /**
  * 财务交易记录对象 fin_transactions
- * 
+ *
  * @author ruoyi
  */
 public class FinTransaction extends BaseEntity
@@ -25,7 +25,7 @@ public class FinTransaction extends BaseEntity
     /** 分类ID */
     @Excel(name = "分类ID")
     private Long categoryId;
-    
+
     /** 分类名称 */
     @Excel(name = "分类名称")
     private String categoryName;
@@ -35,7 +35,7 @@ public class FinTransaction extends BaseEntity
     private BigDecimal amount;
 
     /** 交易类型（1：支出，2：收入） */
-    @Excel(name = "交易类型", readConverterExp = "1=支出,2=收入")
+    @Excel(name = "交易类型", readConverterExp = "1=支出,0=收入")
     private Integer type;
 
     /** 交易时间 */
@@ -58,122 +58,122 @@ public class FinTransaction extends BaseEntity
     /** 删除标志（0代表存在 2代表删除） */
     private String delFlag;
 
-    public void setId(Long id) 
+    public void setId(Long id)
     {
         this.id = id;
     }
 
-    public Long getId() 
+    public Long getId()
     {
         return id;
     }
-    
-    public void setUserId(Long userId) 
+
+    public void setUserId(Long userId)
     {
         this.userId = userId;
     }
 
-    public Long getUserId() 
+    public Long getUserId()
     {
         return userId;
     }
-    
-    public void setCategoryId(Long categoryId) 
+
+    public void setCategoryId(Long categoryId)
     {
         this.categoryId = categoryId;
     }
 
-    public Long getCategoryId() 
+    public Long getCategoryId()
     {
         return categoryId;
     }
-    
-    public void setCategoryName(String categoryName) 
+
+    public void setCategoryName(String categoryName)
     {
         this.categoryName = categoryName;
     }
 
-    public String getCategoryName() 
+    public String getCategoryName()
     {
         return categoryName;
     }
-    
-    public void setAmount(BigDecimal amount) 
+
+    public void setAmount(BigDecimal amount)
     {
         this.amount = amount;
     }
 
-    public BigDecimal getAmount() 
+    public BigDecimal getAmount()
     {
         return amount;
     }
-    
-    public void setType(Integer type) 
+
+    public void setType(Integer type)
     {
         this.type = type;
     }
 
-    public Integer getType() 
+    public Integer getType()
     {
         return type;
     }
-    
-    public void setTransactionTime(Long transactionTime) 
+
+    public void setTransactionTime(Long transactionTime)
     {
         this.transactionTime = transactionTime;
     }
 
-    public Long getTransactionTime() 
+    public Long getTransactionTime()
     {
         return transactionTime;
     }
-    
-    public void setNote(String note) 
+
+    public void setNote(String note)
     {
         this.note = note;
     }
 
-    public String getNote() 
+    public String getNote()
     {
         return note;
     }
-    
-    public void setImagePath(String imagePath) 
+
+    public void setImagePath(String imagePath)
     {
         this.imagePath = imagePath;
     }
 
-    public String getImagePath() 
+    public String getImagePath()
     {
         return imagePath;
     }
-    
-    public void setLocation(String location) 
+
+    public void setLocation(String location)
     {
         this.location = location;
     }
 
-    public String getLocation() 
+    public String getLocation()
     {
         return location;
     }
-    
-    public void setSyncState(Integer syncState) 
+
+    public void setSyncState(Integer syncState)
     {
         this.syncState = syncState;
     }
 
-    public Integer getSyncState() 
+    public Integer getSyncState()
     {
         return syncState;
     }
-    
-    public void setDelFlag(String delFlag) 
+
+    public void setDelFlag(String delFlag)
     {
         this.delFlag = delFlag;
     }
 
-    public String getDelFlag() 
+    public String getDelFlag()
     {
         return delFlag;
     }
@@ -200,4 +200,4 @@ public class FinTransaction extends BaseEntity
             .append("remark", getRemark())
             .toString();
     }
-} 
+}

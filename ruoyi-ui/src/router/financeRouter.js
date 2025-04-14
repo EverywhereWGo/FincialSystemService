@@ -21,19 +21,6 @@ export const financeRoutes = [
     hidden: true
   },
   {
-    path: '/finance',
-    component: Layout,
-    redirect: '/finance/index',
-    children: [
-      {
-        path: 'index',
-        component: () => import('@/views/finance/index'),
-        name: 'FinanceIndex',
-        meta: { title: '财务系统首页', icon: 'dashboard' }
-      }
-    ]
-  },
-  {
     path: '/finance/transaction',
     component: Layout,
     children: [
