@@ -17,7 +17,14 @@
 </template>
 
 <script>
+import { updateUserPassword } from "@/api/finance/auth";
+
 export default {
+  props: {
+    user: {
+      type: Object
+    }
+  },
   data() {
     const validatePass = (rule, value, callback) => {
       if (value.length < 6) {
@@ -61,14 +68,19 @@ export default {
     submit() {
       this.$refs["form"].validate(valid => {
         if (valid) {
-          // 在实际项目中，这里应该调用API更新密码
-          // updateUserPwd(this.user.oldPassword, this.user.newPassword).then(
-          //   response => {
-          //     this.$modal.msgSuccess("修改成功");
-          //     this.close();
-          //   }
-          // );
-          this.$message.success("密码修改成功");
+          // 调用API更新密码
+          const data = {
+            userId: this.user.id,
+            oldPassword: this.user.oldPassword,
+            newPassword: this.user.newPassword
+          };
+          
+          updateUserPassword(data).then(response => {
+            this.$modal.msgSuccess("修改成功");
+            this.close();
+          }).catch(error => {
+            console.error("密码修改失败", error);
+          });
         }
       });
     },

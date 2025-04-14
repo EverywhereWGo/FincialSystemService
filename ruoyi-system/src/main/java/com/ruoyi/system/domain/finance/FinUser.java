@@ -28,6 +28,12 @@ public class FinUser extends BaseEntity
     /** 密码 */
     private String password;
 
+    /** 旧密码 */
+    private String oldPassword;
+
+    /** 新密码 */
+    private String newPassword;
+
     /** 密码盐值 */
     private String salt;
 
@@ -102,6 +108,26 @@ public class FinUser extends BaseEntity
     public String getPassword() 
     {
         return password;
+    }
+    
+    public void setOldPassword(String oldPassword) 
+    {
+        this.oldPassword = oldPassword;
+    }
+
+    public String getOldPassword() 
+    {
+        return oldPassword;
+    }
+    
+    public void setNewPassword(String newPassword) 
+    {
+        this.newPassword = newPassword;
+    }
+
+    public String getNewPassword() 
+    {
+        return newPassword;
     }
     
     public void setSalt(String salt) 
@@ -230,6 +256,8 @@ public class FinUser extends BaseEntity
             .append("id", getId())
             .append("username", getUsername())
             .append("password", getPassword())
+            .append("oldPassword", getOldPassword())
+            .append("newPassword", getNewPassword())
             .append("salt", getSalt())
             .append("nickname", getNickname())
             .append("name", getName())

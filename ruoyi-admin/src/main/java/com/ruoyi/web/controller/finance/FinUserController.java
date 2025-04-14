@@ -114,6 +114,17 @@ public class FinUserController extends BaseController
     public AjaxResult resetPwd(@RequestBody FinUser finUser)
     {
         finUser.setUpdateBy(getUsername());
-        return toAjax(finUserService.resetFinUserPwd(finUser));
+        // 将userId参数映射到id字段
+        if (finUser.getId() == null && finUser.getParams().get("userId") != null) {
+            finUser.setId(Long.valueOf(finUser.getParams().get("userId").toString()));
+        }
+        
+        int result = finUserService.resetFinUserPwd(finUser);
+        if (result == -1) {
+            return AjaxResult.error("旧密码不正确");
+        } else if (result == 0) {
+            return AjaxResult.error("用户不存在");
+        }
+        return toAjax(result);
     }
 }

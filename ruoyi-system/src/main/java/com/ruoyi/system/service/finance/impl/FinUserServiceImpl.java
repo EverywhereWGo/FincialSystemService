@@ -8,6 +8,7 @@ import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.system.mapper.finance.FinUserMapper;
 import com.ruoyi.system.domain.finance.FinUser;
 import com.ruoyi.system.service.finance.IFinUserService;
+import com.ruoyi.common.utils.SecurityUtils;
 
 /**
  * 用户 服务层实现
@@ -113,6 +114,24 @@ public class FinUserServiceImpl implements IFinUserService
     @Override
     public int resetFinUserPwd(FinUser finUser)
     {
+        // 验证旧密码是否正确
+        FinUser originalUser = finUserMapper.selectFinUserById(finUser.getId());
+        if (originalUser == null) {
+            return 0; // 用户不存在
+        }
+        
+        // 验证旧密码是否正确
+        if (!SecurityUtils.matchesPassword(finUser.getOldPassword(), originalUser.getPassword())) {
+            return -1; // 旧密码不正确
+        }
+        
+        // 生成新的盐值（可选）
+        String salt = StringUtils.randomStr(6);
+        finUser.setSalt(salt);
+        
+        // 加密新密码
+        finUser.setPassword(SecurityUtils.encryptPassword(finUser.getNewPassword()));
+        
         return finUserMapper.resetFinUserPwd(finUser);
     }
     
