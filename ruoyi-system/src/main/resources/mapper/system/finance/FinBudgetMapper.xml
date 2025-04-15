@@ -3,7 +3,7 @@
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.ruoyi.system.mapper.finance.FinBudgetMapper">
-    
+
     <resultMap type="FinBudget" id="FinBudgetResult">
         <result property="id"                column="id"                />
         <result property="userId"            column="user_id"           />
@@ -23,7 +23,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectFinBudgetVo">
-        select b.id, b.user_id, b.category_id, c.name as category_name, b.amount, b.year, b.month, 
+        select b.id, b.user_id, b.category_id, c.name as category_name, b.amount, b.year, b.month,
                b.warning_threshold, b.warned, b.del_flag, b.create_by, b.create_time, b.update_by, b.update_time, b.remark
         from fin_budgets b
         left join fin_categories c on b.category_id = c.id
@@ -32,7 +32,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <!-- 查询预算列表 -->
     <select id="selectFinBudgetList" parameterType="FinBudget" resultMap="FinBudgetResult">
         <include refid="selectFinBudgetVo"/>
-        <where>  
+        <where>
             b.del_flag = '0'
             <if test="userId != null "> and b.user_id = #{userId}</if>
             <if test="categoryId != null "> and b.category_id = #{categoryId}</if>
@@ -43,68 +43,70 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </where>
         order by b.year desc, b.month desc
     </select>
-    
+
     <!-- 查询预算详情 -->
     <select id="selectFinBudgetById" parameterType="Long" resultMap="FinBudgetResult">
         <include refid="selectFinBudgetVo"/>
         where b.id = #{id} and b.del_flag = '0'
     </select>
-    
+
     <!-- 查询用户指定月份总预算 -->
     <select id="selectFinBudgetByUserAndMonth" resultMap="FinBudgetResult">
         <include refid="selectFinBudgetVo"/>
-        where b.user_id = #{userId} 
+        where b.user_id = #{userId}
         and b.category_id is null
-        and b.year = #{year} 
+        and b.year = #{year}
         and b.month = #{month}
         and b.del_flag = '0'
     </select>
-    
+
     <!-- 查询用户指定分类预算 -->
     <select id="selectFinBudgetByUserAndCategory" resultMap="FinBudgetResult">
         <include refid="selectFinBudgetVo"/>
-        where b.user_id = #{userId} 
+        where b.user_id = #{userId}
         and b.category_id = #{categoryId}
-        and b.year = #{year} 
+        and b.year = #{year}
         and b.month = #{month}
         and b.del_flag = '0'
     </select>
-    
+
     <!-- 检查预算是否存在 -->
     <select id="checkBudgetUnique" parameterType="FinBudget" resultMap="FinBudgetResult">
         <include refid="selectFinBudgetVo"/>
-        where b.user_id = #{userId} 
+        where b.user_id = #{userId}
         <if test="categoryId != null">and b.category_id = #{categoryId}</if>
         <if test="categoryId == null">and b.category_id is null</if>
-        and b.year = #{year} 
+        and b.year = #{year}
         and b.month = #{month}
         and b.del_flag = '0'
         limit 1
     </select>
-    
+
     <!-- 查询用户指定月份所有预算 -->
     <select id="selectFinBudgetByMonth" resultMap="FinBudgetResult">
         <include refid="selectFinBudgetVo"/>
-        where b.user_id = #{userId} 
-        and b.year = #{year} 
+        where b.user_id = #{userId}
+        and b.year = #{year}
         and b.month = #{month}
         and b.del_flag = '0'
         order by b.category_id
     </select>
-    
+
     <!-- 查询超出预警阈值的预算 -->
     <select id="selectWarningBudgets" resultMap="FinBudgetResult">
         <include refid="selectFinBudgetVo"/>
-        where b.user_id = #{userId} 
-        and b.year = #{year} 
+        where b.user_id = #{userId}
+        and b.year = #{year}
         and b.month = #{month}
         and b.warned = 1
         and b.del_flag = '0'
     </select>
-    
+
     <!-- 新增预算 -->
     <insert id="insertFinBudget" parameterType="FinBudget" useGeneratedKeys="true" keyProperty="id">
-        insert into fin_budgets (
+        <!-- 先验证条件 -->
+        <if test="(year != null and month == null) or (year == null and month != null)">
+            insert into fin_budgets (
             user_id,
             category_id,
             year,
@@ -115,20 +117,21 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             create_by,
             create_time,
             remark
-        ) values (
+            ) values (
             #{userId},
             #{categoryId},
-            #{year},
-            #{month},
+            #{year,jdbcType=INTEGER},
+            #{month,jdbcType=INTEGER},
             #{amount},
             #{warningThreshold},
             #{warned},
             #{createBy},
             sysdate(),
             #{remark}
-        )
+            )
+        </if>
     </insert>
-    
+
     <!-- 修改预算 -->
     <update id="updateFinBudget" parameterType="FinBudget">
         update fin_budgets
@@ -142,7 +145,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </set>
         where id = #{id}
     </update>
-    
+
     <!-- 更新预算预警状态 -->
     <update id="updateBudgetWarningStatus" parameterType="FinBudget">
         update fin_budgets
@@ -150,7 +153,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         update_time = sysdate()
         where id = #{id}
     </update>
-    
+
     <!-- 标记已警告 -->
     <update id="markAsWarned" parameterType="Long">
         update fin_budgets
@@ -158,12 +161,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         update_time = sysdate()
         where id = #{id}
     </update>
-    
+
     <!-- 删除预算 -->
     <update id="deleteFinBudgetById" parameterType="Long">
         update fin_budgets set del_flag = '2' where id = #{id}
     </update>
-    
+
     <!-- 批量删除预算 -->
     <update id="deleteFinBudgetByIds" parameterType="String">
         update fin_budgets set del_flag = '2' where id in
@@ -171,5 +174,5 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{id}
         </foreach>
     </update>
-    
+
 </mapper>
