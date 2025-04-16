@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.math.BigDecimal;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,6 +33,8 @@ import com.ruoyi.common.core.page.TableDataInfo;
 @RequestMapping("/finance/transaction")
 public class FinTransactionController extends BaseController
 {
+    private static final Logger log = LoggerFactory.getLogger(FinTransactionController.class);
+    
     @Autowired
     private IFinTransactionService finTransactionService;
 
@@ -40,6 +44,18 @@ public class FinTransactionController extends BaseController
     @GetMapping("/list")
     public TableDataInfo list(FinTransaction finTransaction)
     {
+        // 确保查询时包含了用户ID
+        if (finTransaction.getUserId() == null) {
+            try {
+                // 尝试获取当前登录用户ID
+                finTransaction.setUserId(getUserId());
+            } catch (Exception e) {
+                // 如果获取失败且没有提供用户ID，直接返回空列表
+                log.info("查询交易记录失败: 无法获取用户ID且请求中未提供用户ID");
+                startPage();
+                return getDataTable(new java.util.ArrayList<>());
+            }
+        }
         startPage();
         List<FinTransaction> list = finTransactionService.selectFinTransactionList(finTransaction);
         return getDataTable(list);
@@ -73,8 +89,19 @@ public class FinTransactionController extends BaseController
     @PostMapping
     public AjaxResult add(@RequestBody FinTransaction finTransaction)
     {
-        finTransaction.setCreateBy(getUsername());
-        finTransaction.setUserId(getUserId());
+        try {
+            // 尝试从上下文获取用户信息
+            finTransaction.setCreateBy(getUsername());
+            finTransaction.setUserId(getUserId());
+        } catch (Exception e) {
+            // 获取用户信息失败，使用请求体中的userId
+            log.info("无Token添加交易记录，使用请求中的用户ID: {}", finTransaction.getUserId());
+            if (finTransaction.getUserId() == null) {
+                log.error("添加交易记录失败: 用户ID为空");
+                return AjaxResult.error("用户ID不能为空");
+            }
+            finTransaction.setCreateBy("mobile_user");
+        }
         return toAjax(finTransactionService.insertFinTransaction(finTransaction));
     }
 
@@ -85,7 +112,14 @@ public class FinTransactionController extends BaseController
     @PutMapping
     public AjaxResult edit(@RequestBody FinTransaction finTransaction)
     {
-        finTransaction.setUpdateBy(getUsername());
+        try {
+            // 尝试从上下文获取用户信息
+            finTransaction.setUpdateBy(getUsername());
+        } catch (Exception e) {
+            // 获取用户信息失败，使用fixed值
+            log.info("无Token修改交易记录，交易ID: {}, 用户ID: {}", finTransaction.getId(), finTransaction.getUserId());
+            finTransaction.setUpdateBy("mobile_user");
+        }
         return toAjax(finTransactionService.updateFinTransaction(finTransaction));
     }
 

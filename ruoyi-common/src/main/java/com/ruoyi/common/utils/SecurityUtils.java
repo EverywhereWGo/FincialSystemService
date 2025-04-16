@@ -12,6 +12,8 @@ import com.ruoyi.common.constant.HttpStatus;
 import com.ruoyi.common.core.domain.entity.SysRole;
 import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.utils.ServletUtils;
+import com.ruoyi.common.utils.LogUtils;
 
 /**
  * 安全服务工具类
@@ -77,7 +79,15 @@ public class SecurityUtils
         }
         catch (Exception e)
         {
-            throw new ServiceException("获取用户信息异常", HttpStatus.UNAUTHORIZED);
+            // 检查是否是财务系统的移动端API调用
+            String requestUri = ServletUtils.getRequest().getRequestURI();
+            if (requestUri != null && requestUri.startsWith("/finance/")) {
+                // 对于财务系统API，仅记录调试信息，不抛出异常
+                LogUtils.getLogger().debug("获取用户信息异常，可能是财务系统移动端API调用: {}", requestUri);
+                throw new ServiceException("获取用户信息异常", HttpStatus.UNAUTHORIZED);
+            } else {
+                throw new ServiceException("获取用户信息异常", HttpStatus.UNAUTHORIZED);
+            }
         }
     }
 

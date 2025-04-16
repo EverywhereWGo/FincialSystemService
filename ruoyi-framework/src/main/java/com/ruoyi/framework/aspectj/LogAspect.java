@@ -87,7 +87,13 @@ public class LogAspect
         try
         {
             // 获取当前的用户
-            LoginUser loginUser = SecurityUtils.getLoginUser();
+            LoginUser loginUser = null;
+            try {
+                loginUser = SecurityUtils.getLoginUser();
+            } catch (Exception ex) {
+                // Token不存在或已过期，可能是匿名访问或移动端API调用
+                log.debug("记录操作日志时无法获取用户信息: {}", ex.getMessage());
+            }
 
             // *========数据库日志=========*//
             SysOperLog operLog = new SysOperLog();
@@ -104,6 +110,11 @@ public class LogAspect
                 {
                     operLog.setDeptName(currentUser.getDept().getDeptName());
                 }
+            }
+            else
+            {
+                // 设置为匿名用户或移动端用户
+                operLog.setOperName("mobile_user");
             }
 
             if (e != null)
@@ -145,6 +156,10 @@ public class LogAspect
      */
     public void getControllerMethodDescription(JoinPoint joinPoint, Log log, SysOperLog operLog, Object jsonResult) throws Exception
     {
+        // 检查是否是财务系统API调用
+        String operUrl = operLog.getOperUrl();
+        boolean isFinanceApi = operUrl != null && operUrl.startsWith("/finance/");
+        
         // 设置action动作
         operLog.setBusinessType(log.businessType().ordinal());
         // 设置标题
@@ -155,7 +170,16 @@ public class LogAspect
         if (log.isSaveRequestData())
         {
             // 获取参数的信息，传入到数据库中。
-            setRequestValue(joinPoint, operLog, log.excludeParamNames());
+            try {
+                setRequestValue(joinPoint, operLog, log.excludeParamNames());
+            } catch (Exception e) {
+                if (isFinanceApi) {
+                    // 财务系统API调用时，只记录异常信息，不抛出
+                    this.log.debug("记录财务系统API日志时出现异常: {}", e.getMessage());
+                } else {
+                    throw e;
+                }
+            }
         }
         // 是否需要保存response，参数和值
         if (log.isSaveResponseData() && StringUtils.isNotNull(jsonResult))
