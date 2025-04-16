@@ -158,7 +158,11 @@ public class FinTransactionController extends BaseController
         params.put("startTime", startTime);
         params.put("endTime", endTime);
         
-        BigDecimal expense = finTransactionService.selectExpenseAmountByMonth(params);
+        // 查询支出参数
+        Map<String, Object> expenseParams = new HashMap<>(params);
+        expenseParams.put("type", 1); // 支出类型为1
+        BigDecimal expense = finTransactionService.selectExpenseAmountByMonth(expenseParams);
+        
         BigDecimal income = finTransactionService.selectIncomeAmountByMonth(params);
         
         Map<String, Object> result = new HashMap<>();

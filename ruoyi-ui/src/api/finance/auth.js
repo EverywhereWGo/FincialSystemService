@@ -71,3 +71,12 @@ export function getLatestLogin(userId) {
     }
   })
 }
+
+// 注销账号
+export function unregister(userId) {
+  return request({
+    url: '/finance/auth/unregister',
+    method: 'post',
+    data: { userId }
+  })
+}

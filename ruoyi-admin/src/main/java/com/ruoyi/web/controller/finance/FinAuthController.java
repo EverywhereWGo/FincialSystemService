@@ -210,7 +210,21 @@ public class FinAuthController extends BaseController
     public AjaxResult logout(@RequestBody Map<String, Object> logoutParams)
     {
         String token = (String) logoutParams.get("token");
-        Long userId = (Long) logoutParams.get("userId");
+        Long userId = null;
+        
+        // 处理userId可能是Integer或Long类型的情况
+        Object userIdObj = logoutParams.get("userId");
+        if (userIdObj != null)
+        {
+            if (userIdObj instanceof Integer)
+            {
+                userId = ((Integer) userIdObj).longValue();
+            }
+            else if (userIdObj instanceof Long)
+            {
+                userId = (Long) userIdObj;
+            }
+        }
         
         if (userId != null)
         {
@@ -228,5 +242,60 @@ public class FinAuthController extends BaseController
         }
         
         return AjaxResult.success("退出成功");
+    }
+    
+    /**
+     * 用户注销账号
+     */
+    @PostMapping("/unregister")
+    public AjaxResult unregister(@RequestBody Map<String, Object> unregisterParams)
+    {
+        Long userId = null;
+        
+        // 处理userId可能是Integer或Long类型的情况
+        Object userIdObj = unregisterParams.get("userId");
+        if (userIdObj != null)
+        {
+            if (userIdObj instanceof Integer)
+            {
+                userId = ((Integer) userIdObj).longValue();
+            }
+            else if (userIdObj instanceof Long)
+            {
+                userId = (Long) userIdObj;
+            }
+        }
+        
+        if (userId == null)
+        {
+            return AjaxResult.error("用户ID不能为空");
+        }
+        
+        // 查询用户信息
+        FinUser user = finUserService.selectFinUserById(userId);
+        if (user == null)
+        {
+            return AjaxResult.error("用户不存在");
+        }
+        
+        // 记录注销日志
+        FinLoginHistory unregisterHistory = new FinLoginHistory();
+        unregisterHistory.setUserId(userId);
+        unregisterHistory.setLoginTime(DateUtils.parseDateToStr("yyyy-MM-dd HH:mm:ss", new Date()));
+        unregisterHistory.setIpAddress(IpUtils.getIpAddr());
+        unregisterHistory.setSuccess(true);
+        unregisterHistory.setRemark("用户注销账号");
+        finLoginHistoryService.insertFinLoginHistory(unregisterHistory);
+        
+        // 删除用户账号
+        int result = finUserService.deleteFinUserById(userId);
+        if (result > 0) 
+        {
+            return AjaxResult.success("账号注销成功");
+        }
+        else
+        {
+            return AjaxResult.error("账号注销失败，请联系管理员");
+        }
     }
 }
