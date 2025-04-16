@@ -3,6 +3,8 @@ package com.ruoyi.web.controller.finance;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,6 +24,8 @@ import com.ruoyi.system.service.finance.IFinTransactionService;
 @RequestMapping("/finance/statistic")
 public class FinStatisticController extends BaseController
 {
+    private static final Logger logger = LoggerFactory.getLogger(FinStatisticController.class);
+
     @Autowired
     private IFinTransactionService finTransactionService;
     
@@ -45,6 +49,55 @@ public class FinStatisticController extends BaseController
         params.put("type", type);
         
         List<Map<String, Object>> stats = finTransactionService.selectFinTransactionStatByCategory(params);
+        
+        // 添加日志，记录结果集大小
+        logger.info("分类统计查询结果条数: {}, userId: {}, type: {}", 
+                stats != null ? stats.size() : 0, userId, type);
+        
+        // 计算分类百分比
+        if (stats != null && !stats.isEmpty()) {
+            // 计算总金额
+            double total = 0;
+            for (Map<String, Object> stat : stats) {
+                Object amountObj = stat.get("amount");
+                if (amountObj != null) {
+                    double amount = 0;
+                    if (amountObj instanceof Number) {
+                        amount = ((Number) amountObj).doubleValue();
+                    } else if (amountObj instanceof String) {
+                        try {
+                            amount = Double.parseDouble((String) amountObj);
+                        } catch (NumberFormatException e) {
+                            logger.error("解析金额失败: {}", amountObj);
+                        }
+                    }
+                    total += amount;
+                }
+            }
+            
+            // 计算各分类占比
+            if (total > 0) {
+                for (Map<String, Object> stat : stats) {
+                    Object amountObj = stat.get("amount");
+                    if (amountObj != null) {
+                        double amount = 0;
+                        if (amountObj instanceof Number) {
+                            amount = ((Number) amountObj).doubleValue();
+                        } else if (amountObj instanceof String) {
+                            try {
+                                amount = Double.parseDouble((String) amountObj);
+                            } catch (NumberFormatException e) {
+                                logger.error("解析金额失败: {}", amountObj);
+                            }
+                        }
+                        // 计算百分比并四舍五入保留两位小数
+                        double percentage = Math.round((amount / total) * 10000) / 100.0;
+                        stat.put("percentage", percentage);
+                    }
+                }
+            }
+        }
+        
         return AjaxResult.success(stats);
     }
     
