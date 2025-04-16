@@ -10,7 +10,7 @@ import com.ruoyi.common.core.domain.BaseEntity;
 
 /**
  * 财务通知对象 fin_notification
- * 
+ *
  * @author ruoyi
  */
 public class FinNotification extends BaseEntity
@@ -39,77 +39,77 @@ public class FinNotification extends BaseEntity
 
     /** 是否已读 */
     @Excel(name = "是否已读", readConverterExp = "0=未读,1=已读")
-    private Boolean read;
+    private Integer read;
 
     /** 删除标志（0代表存在 2代表删除） */
     private String delFlag;
 
-    public void setId(Long id) 
+    public void setId(Long id)
     {
         this.id = id;
     }
 
-    public Long getId() 
+    public Long getId()
     {
         return id;
     }
-    
-    public void setUserId(Long userId) 
+
+    public void setUserId(Long userId)
     {
         this.userId = userId;
     }
 
-    public Long getUserId() 
+    public Long getUserId()
     {
         return userId;
     }
-    
-    public void setTitle(String title) 
+
+    public void setTitle(String title)
     {
         this.title = title;
     }
 
-    public String getTitle() 
+    public String getTitle()
     {
         return title;
     }
-    
-    public void setContent(String content) 
+
+    public void setContent(String content)
     {
         this.content = content;
     }
 
-    public String getContent() 
+    public String getContent()
     {
         return content;
     }
-    
-    public void setType(String type) 
+
+    public void setType(String type)
     {
         this.type = type;
     }
 
-    public String getType() 
+    public String getType()
     {
         return type;
     }
-    
-    public void setRead(Boolean read) 
+
+    public void setRead(Integer read)
     {
         this.read = read;
     }
 
-    public Boolean getRead() 
+    public Integer getRead()
     {
         return read;
     }
-    
-    public void setDelFlag(String delFlag) 
+
+    public void setDelFlag(String delFlag)
     {
         this.delFlag = delFlag;
     }
 
-    public String getDelFlag() 
+    public String getDelFlag()
     {
         return delFlag;
     }

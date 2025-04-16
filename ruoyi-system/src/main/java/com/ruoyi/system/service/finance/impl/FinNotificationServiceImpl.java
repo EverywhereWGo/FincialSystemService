@@ -9,7 +9,7 @@ import com.ruoyi.system.service.finance.IFinNotificationService;
 
 /**
  * 财务通知 服务层实现
- * 
+ *
  * @author ruoyi
  */
 @Service
@@ -20,7 +20,7 @@ public class FinNotificationServiceImpl implements IFinNotificationService
 
     /**
      * 查询财务通知信息
-     * 
+     *
      * @param id 通知ID
      * @return 通知信息
      */
@@ -32,7 +32,7 @@ public class FinNotificationServiceImpl implements IFinNotificationService
 
     /**
      * 查询财务通知列表
-     * 
+     *
      * @param finNotification 通知信息
      * @return 通知集合
      */
@@ -41,10 +41,10 @@ public class FinNotificationServiceImpl implements IFinNotificationService
     {
         return finNotificationMapper.selectFinNotificationList(finNotification);
     }
-    
+
     /**
      * 查询用户未读通知
-     * 
+     *
      * @param userId 用户ID
      * @return 通知集合
      */
@@ -56,7 +56,7 @@ public class FinNotificationServiceImpl implements IFinNotificationService
 
     /**
      * 新增财务通知
-     * 
+     *
      * @param finNotification 通知信息
      * @return 结果
      */
@@ -68,7 +68,7 @@ public class FinNotificationServiceImpl implements IFinNotificationService
 
     /**
      * 修改财务通知
-     * 
+     *
      * @param finNotification 通知信息
      * @return 结果
      */
@@ -80,7 +80,7 @@ public class FinNotificationServiceImpl implements IFinNotificationService
 
     /**
      * 标记通知为已读
-     * 
+     *
      * @param id 通知ID
      * @return 结果
      */
@@ -89,10 +89,10 @@ public class FinNotificationServiceImpl implements IFinNotificationService
     {
         return finNotificationMapper.markAsRead(id);
     }
-    
+
     /**
      * 标记用户所有通知为已读
-     * 
+     *
      * @param userId 用户ID
      * @return 结果
      */
@@ -104,7 +104,7 @@ public class FinNotificationServiceImpl implements IFinNotificationService
 
     /**
      * 删除财务通知对象
-     * 
+     *
      * @param id 通知ID
      * @return 结果
      */
@@ -116,7 +116,7 @@ public class FinNotificationServiceImpl implements IFinNotificationService
 
     /**
      * 批量删除财务通知对象
-     * 
+     *
      * @param ids 需要删除的数据ID
      * @return 结果
      */
@@ -125,10 +125,10 @@ public class FinNotificationServiceImpl implements IFinNotificationService
     {
         return finNotificationMapper.deleteFinNotificationByIds(ids);
     }
-    
+
     /**
      * 批量标记通知为已读
-     * 
+     *
      * @param userId 用户ID
      * @param ids 通知ID列表
      * @return 结果
@@ -141,10 +141,10 @@ public class FinNotificationServiceImpl implements IFinNotificationService
         }
         return finNotificationMapper.batchMarkAsRead(userId, ids);
     }
-    
+
     /**
      * 新增预算预警通知
-     * 
+     *
      * @param userId 用户ID
      * @param budgetId 预算ID
      * @param categoryName 分类名称
@@ -157,7 +157,7 @@ public class FinNotificationServiceImpl implements IFinNotificationService
         FinNotification notification = new FinNotification();
         notification.setUserId(userId);
         notification.setTitle("预算使用预警");
-        
+
         StringBuilder content = new StringBuilder();
         content.append("您的");
         if (categoryName != null) {
@@ -166,17 +166,17 @@ public class FinNotificationServiceImpl implements IFinNotificationService
             content.append("总预算");
         }
         content.append("已使用 ").append(String.format("%.2f", percentage)).append("%，");
-        
+
         if (percentage >= 100) {
             content.append("已超出预算限制。请及时调整支出计划。");
         } else {
             content.append("接近预算限制。请注意控制支出。");
         }
-        
+
         notification.setContent(content.toString());
         notification.setType("budget_warning");
-        notification.setRead(false);
-        
+        notification.setRead(0);
+
         return finNotificationMapper.insertFinNotification(notification);
     }
 }
