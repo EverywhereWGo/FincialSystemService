@@ -23,6 +23,7 @@ import com.ruoyi.system.domain.finance.FinTransaction;
 import com.ruoyi.system.service.finance.IFinTransactionService;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.common.core.page.TableDataInfo;
+import java.util.Calendar;
 
 /**
  * 财务交易记录Controller
@@ -37,6 +38,18 @@ public class FinTransactionController extends BaseController
     
     @Autowired
     private IFinTransactionService finTransactionService;
+
+    /**
+     * 判断用户是否为管理员
+     * 
+     * @param userId 用户ID
+     * @return 是否为管理员
+     */
+    private boolean isAdmin(Long userId) {
+        // 在实际项目中，这里应该检查用户角色
+        // 简化处理：假设ID为1的用户是管理员
+        return userId != null && userId == 1L;
+    }
 
     /**
      * 查询财务交易记录列表
@@ -54,6 +67,19 @@ public class FinTransactionController extends BaseController
                 log.info("查询交易记录失败: 无法获取用户ID且请求中未提供用户ID");
                 startPage();
                 return getDataTable(new java.util.ArrayList<>());
+            }
+        } else {
+            // 安全性检查：如果提供的用户ID与当前登录用户不匹配，则使用当前登录用户ID
+            try {
+                Long currentUserId = getUserId();
+                // 如果当前用户不是管理员，则强制使用当前用户ID
+                if (!isAdmin(currentUserId) && !currentUserId.equals(finTransaction.getUserId())) {
+                    log.warn("尝试越权查询其他用户的交易记录，已重置为当前用户ID");
+                    finTransaction.setUserId(currentUserId);
+                }
+            } catch (Exception e) {
+                // 如果无法获取当前用户身份（如移动端应用），则继续使用提供的用户ID
+                log.info("无Token环境，使用提供的用户ID: {}", finTransaction.getUserId());
             }
         }
         startPage();
@@ -205,5 +231,52 @@ public class FinTransactionController extends BaseController
         result.put("balance", income.subtract(expense));
         
         return AjaxResult.success(result);
+    }
+    
+    /**
+     * 获取特定月份每日交易记录
+     */
+    @GetMapping("/daily")
+    public AjaxResult getDailyTransactions(Long userId, Integer year, Integer month)
+    {
+        if (userId == null) {
+            try {
+                // 尝试获取当前登录用户ID
+                userId = getUserId();
+            } catch (Exception e) {
+                // 如果获取失败且没有提供用户ID，直接返回错误信息
+                log.error("查询每日交易记录失败: 无法获取用户ID且请求中未提供用户ID");
+                return AjaxResult.error("用户ID不能为空");
+            }
+        }
+        
+        if (year == null || month == null) {
+            return AjaxResult.error("年份和月份不能为空");
+        }
+        
+        // 使用新的按时间范围查询方法
+        Map<String, Object> params = new HashMap<>();
+        params.put("userId", userId);
+        
+        // 计算月份的起始和结束时间戳
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.YEAR, year);
+        cal.set(Calendar.MONTH, month - 1); // Calendar月份从0开始
+        cal.set(Calendar.DAY_OF_MONTH, 1);
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        long startTime = cal.getTimeInMillis();
+        
+        cal.add(Calendar.MONTH, 1);
+        cal.add(Calendar.MILLISECOND, -1);
+        long endTime = cal.getTimeInMillis();
+        
+        params.put("startTime", startTime);
+        params.put("endTime", endTime);
+        
+        List<Map<String, Object>> list = finTransactionService.selectDailyTransactionsByTimeRange(params);
+        return AjaxResult.success(list);
     }
 } 

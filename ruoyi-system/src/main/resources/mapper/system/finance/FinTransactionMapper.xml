@@ -215,6 +215,48 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         limit #{limit}
     </select>
     
+    <!-- 获取特定月份每日交易记录 -->
+    <select id="selectDailyTransactionsByMonth" parameterType="Map" resultType="Map">
+        SELECT 
+            DATE_FORMAT(FROM_UNIXTIME(transaction_time/1000), '%Y-%m-%d') as day,
+            SUM(CASE WHEN type = 1 THEN amount ELSE NULL END) as expense,
+            SUM(CASE WHEN type = 2 THEN amount ELSE NULL END) as income,
+            COUNT(CASE WHEN type = 1 THEN id ELSE NULL END) as expenseCount,
+            COUNT(CASE WHEN type = 2 THEN id ELSE NULL END) as incomeCount
+        FROM 
+            fin_transactions
+        WHERE 
+            user_id = #{userId}
+            AND YEAR(FROM_UNIXTIME(transaction_time/1000)) = #{year}
+            AND MONTH(FROM_UNIXTIME(transaction_time/1000)) = #{month}
+            AND del_flag = '0'
+        GROUP BY 
+            day
+        ORDER BY 
+            day ASC
+    </select>
+    
+    <!-- 按时间范围获取特定月份每日交易记录 -->
+    <select id="selectDailyTransactionsByTimeRange" parameterType="Map" resultType="Map">
+        SELECT 
+            DATE_FORMAT(FROM_UNIXTIME(transaction_time/1000), '%Y-%m-%d') as day,
+            SUM(CASE WHEN type = 1 THEN amount ELSE NULL END) as expense,
+            SUM(CASE WHEN type = 2 THEN amount ELSE NULL END) as income,
+            COUNT(CASE WHEN type = 1 THEN id ELSE NULL END) as expenseCount,
+            COUNT(CASE WHEN type = 2 THEN id ELSE NULL END) as incomeCount
+        FROM 
+            fin_transactions
+        WHERE 
+            user_id = #{userId}
+            AND transaction_time &gt;= #{startTime}
+            AND transaction_time &lt;= #{endTime}
+            AND del_flag = '0'
+        GROUP BY 
+            day
+        ORDER BY 
+            day ASC
+    </select>
+    
     <!-- 新增财务交易记录 -->
     <insert id="insertFinTransaction" parameterType="FinTransaction" useGeneratedKeys="true" keyProperty="id">
         insert into fin_transactions (

@@ -211,4 +211,28 @@ public class FinTransactionServiceImpl implements IFinTransactionService
     {
         return finTransactionMapper.selectTopTransactions(params);
     }
+    
+    /**
+     * 获取特定月份每日交易记录
+     * 
+     * @param params 查询参数，包含userId、year、month
+     * @return 每日交易记录列表
+     */
+    @Override
+    public List<Map<String, Object>> selectDailyTransactionsByMonth(Map<String, Object> params)
+    {
+        return finTransactionMapper.selectDailyTransactionsByMonth(params);
+    }
+
+    /**
+     * 按时间范围获取特定月份每日交易记录
+     * 
+     * @param params 查询参数，包含userId、startTime、endTime
+     * @return 每日交易记录列表
+     */
+    @Override
+    public List<Map<String, Object>> selectDailyTransactionsByTimeRange(Map<String, Object> params)
+    {
+        return finTransactionMapper.selectDailyTransactionsByTimeRange(params);
+    }
 } 
