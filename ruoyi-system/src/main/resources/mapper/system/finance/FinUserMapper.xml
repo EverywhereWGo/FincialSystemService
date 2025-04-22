@@ -18,6 +18,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="lockedUntil"   column="locked_until"   />
         <result property="wechat"   column="wechat"   />
         <result property="qq"   column="qq"   />
+
         <result property="delFlag"   column="del_flag"   />
         <result property="createBy"   column="create_by"   />
         <result property="createTime" column="create_time" />
@@ -93,6 +94,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="lockedUntil != null">locked_until,</if>
             <if test="wechat != null">wechat,</if>
             <if test="qq != null">qq,</if>
+
             <if test="createBy != null">create_by,</if>
             <if test="createTime != null">create_time,</if>
             <if test="updateBy != null">update_by,</if>
@@ -114,6 +116,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="lockedUntil != null">#{lockedUntil},</if>
             <if test="wechat != null">#{wechat},</if>
             <if test="qq != null">#{qq},</if>
+
             <if test="createBy != null">#{createBy},</if>
             <if test="createTime != null">#{createTime},</if>
             <if test="updateBy != null">#{updateBy},</if>

@@ -79,6 +79,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         and b.year = #{year}
         and b.month = #{month}
         and b.del_flag = '0'
+        <if test="id != null">and b.id != #{id}</if>
         limit 1
     </select>
 
@@ -104,8 +105,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <!-- 新增预算 -->
     <insert id="insertFinBudget" parameterType="FinBudget" useGeneratedKeys="true" keyProperty="id">
-        <!-- 先验证条件 -->
-        <if test="(year != null and month == null) or (year == null and month != null)">
+        <!-- 确保year和month要么都有值，要么都为空 -->
+        <if test="(year != null and month != null) or (year == null and month == null)">
             insert into fin_budgets (
             user_id,
             category_id,

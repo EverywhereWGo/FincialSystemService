@@ -20,6 +20,11 @@ import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.common.utils.SecurityUtils;
+import com.ruoyi.common.utils.file.FileUploadUtils;
+import com.ruoyi.common.config.RuoYiConfig;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.access.prepost.PreAuthorize;
+import com.ruoyi.common.utils.file.MimeTypeUtils;
 
 /**
  * 用户管理Controller
@@ -126,5 +131,87 @@ public class FinUserController extends BaseController
             return AjaxResult.error("用户不存在");
         }
         return toAjax(result);
+    }
+    
+    /**
+     * 编辑个人资料
+     */
+    @Log(title = "个人资料", businessType = BusinessType.UPDATE)
+    @PutMapping("/profile")
+    public AjaxResult editProfile(@RequestBody FinUser finUser)
+    {
+        // 参数验证
+        if (finUser.getId() == null && finUser.getParams().get("userId") != null) {
+            finUser.setId(Long.valueOf(finUser.getParams().get("userId").toString()));
+        }
+        
+        if (finUser.getId() == null) {
+            return AjaxResult.error("用户ID不能为空");
+        }
+        
+        if (StringUtils.isEmpty(finUser.getNickname())) {
+            return AjaxResult.error("昵称不能为空");
+        }
+        
+        if (StringUtils.isEmpty(finUser.getEmail())) {
+            return AjaxResult.error("邮箱不能为空");
+        }
+        
+        if (StringUtils.isEmpty(finUser.getPhone())) {
+            return AjaxResult.error("手机号码不能为空");
+        }
+        
+        try {
+            finUser.setUpdateBy(getUsername());
+        } catch (Exception e) {
+            finUser.setUpdateBy("mobile_user");
+        }
+        
+        // 检查邮箱和手机号是否被其他用户使用
+        String emailUnique = finUserService.checkEmailUnique(finUser);
+        if (!"0".equals(emailUnique)) {
+            return AjaxResult.error("修改个人资料失败，邮箱地址已被使用");
+        }
+        
+        String phoneUnique = finUserService.checkPhoneUnique(finUser);
+        if (!"0".equals(phoneUnique)) {
+            return AjaxResult.error("修改个人资料失败，手机号码已被使用");
+        }
+        
+        int result = finUserService.updateFinUser(finUser);
+        if (result > 0) {
+            return AjaxResult.success("个人资料修改成功");
+        }
+        return AjaxResult.error("修改个人资料失败，请联系管理员");
+    }
+    
+    /**
+     * 上传用户头像
+     */
+    @Log(title = "用户头像", businessType = BusinessType.UPDATE)
+    @PostMapping("/avatar")
+    public AjaxResult uploadAvatar(MultipartFile avatarfile, Long userId) throws Exception
+    {
+        if (!avatarfile.isEmpty())
+        {
+            Long currentUserId = null;
+            try {
+                // 如果未提供用户ID，则使用当前登录用户ID
+                currentUserId = (userId != null) ? userId : getUserId();
+            } catch (Exception e) {
+                return AjaxResult.error("获取用户信息异常，请确保已登录或在请求中提供userId");
+            }
+            
+            // 上传文件路径
+            String avatarPath = RuoYiConfig.getAvatarPath();
+            // 上传并返回新文件名称
+            String avatar = FileUploadUtils.upload(avatarPath, avatarfile, MimeTypeUtils.IMAGE_EXTENSION);
+            
+            // 直接返回成功和图片URL，不再保存到用户对象中，因为avatar字段已移除
+            AjaxResult ajax = AjaxResult.success("头像上传成功");
+            ajax.put("imgUrl", avatar);
+            return ajax;
+        }
+        return AjaxResult.error("上传头像异常，请重新上传");
     }
 }
