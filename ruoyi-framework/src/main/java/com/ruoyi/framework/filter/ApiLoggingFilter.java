@@ -59,6 +59,15 @@ public class ApiLoggingFilter implements Filter {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
         
+        // 检查Content-Type，如果是multipart/form-data，则直接传递，不进行包装和日志记录
+        String contentType = httpRequest.getContentType();
+        if (contentType != null && contentType.toLowerCase().contains("multipart/form-data")) {
+            // 对于文件上传请求，直接放行，不进行请求包装
+            log.info("检测到文件上传请求，跳过请求体日志记录: {}", httpRequest.getRequestURI());
+            chain.doFilter(request, response);
+            return;
+        }
+        
         // 生成唯一请求ID用于关联请求和响应日志
         String requestId = UUID.randomUUID().toString();
         

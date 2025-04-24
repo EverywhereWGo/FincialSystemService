@@ -57,6 +57,9 @@ public class FinUser extends BaseEntity
     @Excel(name = "角色", readConverterExp = "admin=管理员,user=普通用户")
     private String role;
 
+    /** 用户头像 */
+    private String avatar;
+
     /** 登录失败次数 */
     private Integer failedAttempts;
 
@@ -248,6 +251,16 @@ public class FinUser extends BaseEntity
     public String getLastLoginTime() 
     {
         return lastLoginTime;
+    }
+
+    public String getAvatar() 
+    {
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) 
+    {
+        this.avatar = avatar;
     }
 
     @Override

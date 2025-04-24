@@ -14,6 +14,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="email"   column="email"   />
         <result property="phone"   column="phone"   />
         <result property="role"   column="role"   />
+        <result property="avatar"   column="avatar"   />
         <result property="failedAttempts"   column="failed_attempts"   />
         <result property="lockedUntil"   column="locked_until"   />
         <result property="wechat"   column="wechat"   />
@@ -29,7 +30,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectFinUserVo">
-        select id, username, password, salt, nickname, name, email, phone, role, failed_attempts, locked_until, 
+        select id, username, password, salt, nickname, name, email, phone, role, avatar, failed_attempts, locked_until, 
         wechat, qq, del_flag, create_by, create_time, update_by, update_time, last_login_time, remark
         from fin_users
     </sql>
@@ -90,6 +91,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="email != null">email,</if>
             <if test="phone != null">phone,</if>
             <if test="role != null">role,</if>
+            <if test="avatar != null">avatar,</if>
             <if test="failedAttempts != null">failed_attempts,</if>
             <if test="lockedUntil != null">locked_until,</if>
             <if test="wechat != null">wechat,</if>
@@ -112,6 +114,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="email != null">#{email},</if>
             <if test="phone != null">#{phone},</if>
             <if test="role != null">#{role},</if>
+            <if test="avatar != null">#{avatar},</if>
             <if test="failedAttempts != null">#{failedAttempts},</if>
             <if test="lockedUntil != null">#{lockedUntil},</if>
             <if test="wechat != null">#{wechat},</if>
@@ -135,6 +138,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="email != null">email = #{email},</if>
             <if test="phone != null">phone = #{phone},</if>
             <if test="role != null">role = #{role},</if>
+            <if test="avatar != null">avatar = #{avatar},</if>
             <if test="wechat != null">wechat = #{wechat},</if>
             <if test="qq != null">qq = #{qq},</if>
             <if test="updateBy != null">update_by = #{updateBy},</if>

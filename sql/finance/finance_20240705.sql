@@ -12,6 +12,7 @@ create table fin_users (
   email              varchar(100)    default null               comment '邮箱',
   phone              varchar(20)     default null               comment '手机号',
   role               varchar(20)     not null default 'user'    comment '角色（admin/user）',
+  avatar             varchar(255)    default null               comment '用户头像地址',
   failed_attempts    int(11)         not null default '0'       comment '登录失败次数',
   locked_until       datetime        default null               comment '锁定截止时间',
   wechat             varchar(100)    default null               comment '微信号',
@@ -32,8 +33,8 @@ create table fin_users (
 -- ----------------------------
 -- 初始化-用户表数据
 -- ----------------------------
-insert into fin_users values(1, 'admin', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', 'admin123', '管理员', '系统管理员', 'admin@example.com', '13800138000', 'admin', 0, null, null, null, '0', 'admin', sysdate(), '', null, sysdate(), '系统管理员');
-insert into fin_users values(2, 'test', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', 'admin123', '测试用户', '测试用户', 'test@example.com', '13900139000', 'user', 0, null, null, null, '0', 'admin', sysdate(), '', null, sysdate(), '测试用户');
+insert into fin_users values(1, 'admin', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', 'admin123', '管理员', '系统管理员', 'admin@example.com', '13800138000', 'admin', null, 0, null, null, null, '0', 'admin', sysdate(), '', null, sysdate(), '系统管理员');
+insert into fin_users values(2, 'test', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', 'admin123', '测试用户', '测试用户', 'test@example.com', '13900139000', 'user', null, 0, null, null, null, '0', 'admin', sysdate(), '', null, sysdate(), '测试用户');
 
 -- ----------------------------
 -- 2、登录历史表
