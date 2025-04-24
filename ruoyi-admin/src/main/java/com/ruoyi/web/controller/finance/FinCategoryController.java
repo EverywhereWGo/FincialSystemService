@@ -1,6 +1,7 @@
 package com.ruoyi.web.controller.finance;
 
 import java.util.List;
+import java.util.HashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.core.controller.BaseController;
@@ -18,6 +20,10 @@ import com.ruoyi.system.domain.finance.FinCategory;
 import com.ruoyi.system.service.finance.IFinCategoryService;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.common.core.page.TableDataInfo;
+import com.ruoyi.common.utils.file.FileUploadUtils;
+import com.ruoyi.common.utils.file.MimeTypeUtils;
+import com.ruoyi.common.config.RuoYiConfig;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 财务分类Controller
@@ -106,6 +112,35 @@ public class FinCategoryController extends BaseController
     public AjaxResult remove(@PathVariable Long[] ids)
     {
         return toAjax(finCategoryService.deleteFinCategoryByIds(ids));
+    }
+    
+    /**
+     * 上传分类图标
+     */
+    @Log(title = "上传图标", businessType = BusinessType.UPDATE)
+    @PostMapping("/icon")
+    public AjaxResult uploadIcon(@RequestParam(value = "file") MultipartFile file, @RequestParam(value = "categoryId", required = false) Long categoryId) throws Exception {
+        if (!file.isEmpty()) {
+            // 上传文件路径
+            String iconPath = RuoYiConfig.getProfile() + "/category/icon";
+            // 上传并返回新文件名称
+            String iconUrl = FileUploadUtils.upload(iconPath, file, MimeTypeUtils.IMAGE_EXTENSION);
+            
+            // 如果提供了分类ID，则更新分类图标路径
+            if (categoryId != null) {
+                FinCategory category = new FinCategory();
+                category.setId(categoryId);
+                category.setIcon(iconUrl);
+                category.setUpdateBy(getUsername());
+                finCategoryService.updateFinCategory(category);
+            }
+            
+            // 返回成功和图片URL
+            HashMap<String, String> resultMap = new HashMap<>();
+            resultMap.put("iconUrl", iconUrl);
+            return AjaxResult.success("图标上传成功", resultMap);
+        }
+        return AjaxResult.error("上传图标异常，请重新上传");
     }
     
     /**

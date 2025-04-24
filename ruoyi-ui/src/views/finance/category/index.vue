@@ -11,12 +11,9 @@
       </el-form-item>
       <el-form-item label="类型" prop="type">
         <el-select v-model="queryParams.type" placeholder="请选择类型" clearable>
-          <el-option
-            v-for="dict in dict.type.fin_category_type"
-            :key="dict.value"
-            :label="dict.label"
-            :value="dict.value"
-          />
+          <el-option label="支出" :value="1" />
+          <el-option label="收入" :value="2" />
+          <el-option label="收入(旧)" :value="0" />
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -77,12 +74,20 @@
       <el-table-column label="分类名称" align="center" prop="name" />
       <el-table-column label="类型" align="center" prop="type">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.fin_category_type" :value="scope.row.type"/>
+          <el-tag type="danger" v-if="scope.row.type === 1">支出</el-tag>
+          <el-tag type="success" v-else-if="scope.row.type === 2">收入</el-tag>
+          <span v-else>{{ scope.row.type }}</span>
         </template>
       </el-table-column>
       <el-table-column label="图标" align="center" prop="icon">
         <template slot-scope="scope">
-          <i :class="'el-icon-' + scope.row.icon" v-if="scope.row.icon"></i>
+          <img 
+            v-if="isImageUrl(scope.row.icon)" 
+            :src="getImageUrl(scope.row.icon)" 
+            alt="图标" 
+            style="width: 30px; height: 30px; object-fit: contain;"
+          />
+          <i v-else :class="'el-icon-' + scope.row.icon" v-if="scope.row.icon"></i>
           <span v-else>-</span>
         </template>
       </el-table-column>
@@ -148,8 +153,39 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="图标" prop="icon">
-          <el-input v-model="form.icon" placeholder="请输入图标" />
-          <div class="el-form-item__tips">请输入Element UI图标名称，如: goods</div>
+          <el-upload 
+            name="file"
+            ref="upload"
+            :limit="1"
+            accept=".jpg, .png, .jpeg"
+            :action="upload.url + (form.id ? '?categoryId=' + form.id : '')"
+            :headers="upload.headers"
+            :file-list="upload.fileList"
+            :on-progress="handleFileUploadProgress"
+            :on-success="handleFileSuccess"
+            :on-error="handleUploadError"
+            :on-exceed="handleExceed"
+            :on-remove="handleRemove"
+            :on-preview="handlePictureCardPreview"
+            :before-upload="handleBeforeUpload"
+            list-type="picture-card"
+            :class="{hide: upload.fileList.length >= 1}">
+            <i class="el-icon-plus"></i>
+          </el-upload>
+          <!-- 上传提示 -->
+          <div class="el-upload__tip" slot="tip">只能上传jpg/png/jpeg文件，且不超过2MB</div>
+        
+          <el-dialog
+            :visible.sync="dialogVisible"
+            title="预览"
+            width="800"
+            append-to-body
+          >
+            <img
+              :src="dialogImageUrl"
+              style="display: block; max-width: 100%; margin: 0 auto"
+            />
+          </el-dialog>
         </el-form-item>
         <el-form-item label="颜色" prop="color">
           <el-color-picker v-model="form.color"></el-color-picker>
@@ -171,7 +207,8 @@
 </template>
 
 <script>
-import { listCategory, getCategory, delCategory, addCategory, updateCategory } from "@/api/finance/category";
+import { listCategory, getCategory, delCategory, addCategory, updateCategory, uploadCategoryIcon } from "@/api/finance/category";
+import { getToken } from "@/utils/auth";
 
 export default {
   name: "Category",
@@ -216,7 +253,19 @@ export default {
         displayOrder: [
           { required: true, message: "显示顺序不能为空", trigger: "blur" }
         ]
-      }
+      },
+      upload: {
+        // 是否禁用上传
+        isUploading: false,
+        // 设置上传的请求头部
+        headers: { Authorization: "Bearer " + getToken() },
+        // 上传的地址
+        url: process.env.VUE_APP_BASE_API + "/finance/category/icon",
+        // 上传的文件列表
+        fileList: []
+      },
+      dialogVisible: false,
+      dialogImageUrl: ''
     };
   },
   created() {
@@ -228,6 +277,9 @@ export default {
       this.loading = true;
       listCategory(this.queryParams).then(response => {
         this.categoryList = response.rows;
+        // 调试输出
+        console.log("分类数据: ", this.categoryList);
+        console.log("字典数据: ", this.dict.type.fin_category_type);
         this.total = response.total;
         this.loading = false;
       });
@@ -269,6 +321,7 @@ export default {
     /** 新增按钮操作 */
     handleAdd() {
       this.reset();
+      this.upload.fileList = [];
       this.open = true;
       this.title = "添加分类";
     },
@@ -279,6 +332,12 @@ export default {
       getCategory(id).then(response => {
         this.form = response.data;
         this.form.type = parseInt(this.form.type);
+        // 设置上传文件列表
+        if (this.form.icon && this.isImageUrl(this.form.icon)) {
+          this.upload.fileList = [{ name: this.getFileName(this.form.icon), url: this.getImageUrl(this.form.icon) }];
+        } else {
+          this.upload.fileList = [];
+        }
         this.open = true;
         this.title = "修改分类";
       });
@@ -287,6 +346,11 @@ export default {
     submitForm() {
       this.$refs["form"].validate(valid => {
         if (valid) {
+          if (this.upload.isUploading) {
+            this.$modal.msgWarning("图标正在上传中，请等待上传完成后再提交");
+            return;
+          }
+          
           if (this.form.id != null) {
             updateCategory(this.form).then(response => {
               this.$modal.msgSuccess("修改成功");
@@ -322,6 +386,59 @@ export default {
         this.download(response.msg);
         this.exportLoading = false;
       }).catch(() => {});
+    },
+    isImageUrl(icon) {
+      if (!icon) return false;
+      return icon.startsWith('/profile') || icon.startsWith('http');
+    },
+    getImageUrl(path) {
+      if (!path) return '';
+      if (path.startsWith('http')) return path;
+      return process.env.VUE_APP_BASE_API + path;
+    },
+    getFileName(path) {
+      if (!path) return '';
+      return path.substring(path.lastIndexOf("/") + 1);
+    },
+    handleFileUploadProgress(event, file, fileList) {
+      this.upload.isUploading = true;
+    },
+    handleFileSuccess(response, file, fileList) {
+      this.upload.isUploading = false;
+      if (response.code === 200) {
+        this.form.icon = response.iconUrl || response.data.iconUrl;
+        this.$modal.msgSuccess(response.msg || "上传成功");
+      } else {
+        this.$modal.msgError(response.msg || "上传失败");
+      }
+    },
+    handleUploadError(error, file) {
+      this.upload.isUploading = false;
+      this.$modal.msgError("上传失败，请检查网络连接或文件格式");
+    },
+    handleExceed(files, fileList) {
+      this.$modal.msgWarning("只能上传一个文件，请先删除已上传的文件");
+    },
+    handleRemove(file, fileList) {
+      this.upload.fileList = fileList;
+      this.form.icon = '';
+    },
+    handlePictureCardPreview(file) {
+      this.dialogImageUrl = file.url;
+      this.dialogVisible = true;
+    },
+    handleBeforeUpload(file) {
+      const isJPG = file.type === 'image/jpeg';
+      const isPNG = file.type === 'image/png';
+      const isLt2M = file.size / 1024 / 1024 < 2;
+
+      if (!isJPG && !isPNG) {
+        this.$modal.msgWarning('上传图标只能是 JPG/PNG 格式!');
+      }
+      if (!isLt2M) {
+        this.$modal.msgWarning('上传图标大小不能超过 2MB!');
+      }
+      return (isJPG || isPNG) && isLt2M;
     }
   }
 };
@@ -333,5 +450,10 @@ export default {
   height: 20px;
   border-radius: 4px;
   margin: 0 auto;
+}
+
+/* 上传组件样式 */
+::v-deep .hide .el-upload--picture-card {
+  display: none;
 }
 </style>

@@ -103,4 +103,16 @@ export function exportTransaction(query) {
     method: 'get',
     params: query
   })
+}
+
+// 上传交易票据图片
+export function uploadTransactionImage(data) {
+  return request({
+    url: '/finance/transaction/image',
+    method: 'post',
+    data: data,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
 } 

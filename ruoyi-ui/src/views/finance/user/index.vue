@@ -205,6 +205,9 @@
     <!-- 重置密码对话框 -->
     <el-dialog title="重置密码" :visible.sync="resetOpen" width="400px" append-to-body>
       <el-form ref="pwdForm" :model="pwdForm" :rules="pwdRules" label-width="80px">
+        <el-form-item label="旧密码" prop="oldPassword">
+          <el-input v-model="pwdForm.oldPassword" placeholder="请输入旧密码" type="password" />
+        </el-form-item>
         <el-form-item label="新密码" prop="password">
           <el-input v-model="pwdForm.password" placeholder="请输入新密码" type="password" />
         </el-form-item>
@@ -258,6 +261,7 @@ export default {
       // 重置密码表单
       pwdForm: {
         userId: null,
+        oldPassword: "",
         password: "",
         confirmPassword: ""
       },
@@ -293,6 +297,9 @@ export default {
       },
       // 重置密码校验
       pwdRules: {
+        oldPassword: [
+          { required: true, message: "旧密码不能为空", trigger: "blur" }
+        ],
         password: [
           { required: true, message: "新密码不能为空", trigger: "blur" },
           { min: 6, message: "密码长度不能小于6个字符", trigger: "blur" }
@@ -375,6 +382,7 @@ export default {
     handleResetPwd(row) {
       this.pwdForm = {
         userId: row.id || this.ids[0],
+        oldPassword: "",
         password: "",
         confirmPassword: ""
       };
@@ -404,10 +412,12 @@ export default {
     submitPwdForm() {
       this.$refs["pwdForm"].validate(valid => {
         if (valid) {
-          resetUserPwd(this.pwdForm.userId, this.pwdForm.password).then(response => {
+          resetUserPwd(this.pwdForm.userId, this.pwdForm.password, this.pwdForm.oldPassword).then(response => {
             this.$modal.msgSuccess("重置成功");
             this.resetOpen = false;
             this.getList();
+          }).catch(error => {
+            console.error("密码重置失败", error);
           });
         }
       });

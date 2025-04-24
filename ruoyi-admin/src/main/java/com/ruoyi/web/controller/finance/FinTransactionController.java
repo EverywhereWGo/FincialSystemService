@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.core.controller.BaseController;
@@ -24,6 +25,10 @@ import com.ruoyi.system.service.finance.IFinTransactionService;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.common.core.page.TableDataInfo;
 import java.util.Calendar;
+import org.springframework.web.multipart.MultipartFile;
+import com.ruoyi.common.utils.file.FileUploadUtils;
+import com.ruoyi.common.utils.file.MimeTypeUtils;
+import com.ruoyi.common.config.RuoYiConfig;
 
 /**
  * 财务交易记录Controller
@@ -231,6 +236,39 @@ public class FinTransactionController extends BaseController
         result.put("balance", income.subtract(expense));
         
         return AjaxResult.success(result);
+    }
+    
+    /**
+     * 上传交易票据图片
+     */
+    @Log(title = "上传票据", businessType = BusinessType.UPDATE)
+    @PostMapping("/image")
+    public AjaxResult uploadImage(@RequestParam(value = "file") MultipartFile file, @RequestParam(value = "transactionId", required = false) Long transactionId) throws Exception {
+        if (!file.isEmpty()) {
+            // 上传文件路径
+            String imagePath = RuoYiConfig.getProfile() + "/transaction";
+            // 上传并返回新文件名称
+            String imageUrl = FileUploadUtils.upload(imagePath, file, MimeTypeUtils.IMAGE_EXTENSION);
+            
+            // 如果提供了交易ID，则更新交易记录的图片路径
+            if (transactionId != null) {
+                FinTransaction transaction = new FinTransaction();
+                transaction.setId(transactionId);
+                transaction.setImagePath(imageUrl);
+                try {
+                    transaction.setUpdateBy(getUsername());
+                } catch (Exception e) {
+                    transaction.setUpdateBy("mobile_user");
+                }
+                finTransactionService.updateFinTransaction(transaction);
+            }
+            
+            // 返回成功和图片URL
+            HashMap<String, String> resultMap = new HashMap<>();
+            resultMap.put("imageUrl", imageUrl);
+            return AjaxResult.success("票据上传成功", resultMap);
+        }
+        return AjaxResult.error("上传票据异常，请重新上传");
     }
     
     /**

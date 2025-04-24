@@ -44,10 +44,11 @@ export function delUser(id) {
 }
 
 // 重置用户密码
-export function resetUserPwd(id, password) {
+export function resetUserPwd(id, password, oldPassword) {
   const data = {
     id,
-    password
+    oldPassword,
+    newPassword: password
   }
   return request({
     url: '/finance/user/resetPwd',

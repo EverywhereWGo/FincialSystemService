@@ -58,4 +58,16 @@ export function exportCategory(query) {
     method: 'get',
     params: query
   })
+}
+
+// 上传分类图标
+export function uploadCategoryIcon(data) {
+  return request({
+    url: '/finance/category/icon',
+    method: 'post',
+    data: data,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
 } 

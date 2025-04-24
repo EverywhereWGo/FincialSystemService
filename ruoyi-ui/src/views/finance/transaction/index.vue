@@ -139,7 +139,7 @@
             ref="upload"
             :limit="1"
             accept=".jpg, .png, .jpeg"
-            :action="upload.url"
+            :action="upload.url + (form.id ? '?transactionId=' + form.id : '')"
             :headers="upload.headers"
             :file-list="upload.fileList"
             :on-progress="handleFileUploadProgress"
@@ -181,7 +181,7 @@
 </template>
 
 <script>
-import { listTransaction, getTransaction, delTransaction, addTransaction, updateTransaction, exportTransaction } from "@/api/finance/transaction";
+import { listTransaction, getTransaction, delTransaction, addTransaction, updateTransaction, exportTransaction, uploadTransactionImage } from "@/api/finance/transaction";
 import { listCategoryByType } from "@/api/finance/category";
 import { Notification } from 'element-ui';
 import { getToken } from "@/utils/auth";
@@ -261,7 +261,7 @@ export default {
         // 设置上传的请求头部
         headers: { Authorization: "Bearer " + getToken() },
         // 上传的地址
-        url: process.env.VUE_APP_BASE_API + "/common/upload",
+        url: process.env.VUE_APP_BASE_API + "/finance/transaction/image",
         // 上传的文件列表
         fileList: []
       },
@@ -454,8 +454,12 @@ export default {
     // 文件上传成功处理
     handleFileSuccess(response, file, fileList) {
       this.upload.isUploading = false;
-      this.form.imagePath = response.url;
-      this.$modal.msgSuccess(response.msg || "上传成功");
+      if (response.code === 200) {
+        this.form.imagePath = response.imageUrl || response.data.imageUrl;
+        this.$modal.msgSuccess(response.msg || "上传成功");
+      } else {
+        this.$modal.msgError(response.msg || "上传失败");
+      }
     },
     handleUploadError(error, file) {
       this.$modal.msgError("上传失败，请检查网络连接或文件格式");

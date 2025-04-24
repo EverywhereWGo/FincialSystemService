@@ -64,7 +64,7 @@ create table fin_categories (
   id                bigint(20)      not null auto_increment    comment '分类ID',
   name              varchar(50)     not null                   comment '分类名称',
   type              tinyint(4)      not null                   comment '类型（1:支出,2:收入）',
-  icon              varchar(50)     default null               comment '图标',
+  icon              varchar(255)     default null               comment '图标',
   color             varchar(20)     default null               comment '颜色代码',
   user_id           bigint(20)      default null               comment '用户ID（NULL表示系统预设）',
   display_order     int(11)         not null default '0'       comment '显示顺序',
@@ -196,4 +196,4 @@ insert into fin_category_rules values(1, 1, '餐厅|饭店|食堂|外卖|美食|
 insert into fin_category_rules values(2, 2, '购物|超市|商场|淘宝|京东|网购', null, '0', 'admin', sysdate(), '', null, '购物分类匹配规则');
 insert into fin_category_rules values(3, 3, '公交|地铁|打车|出租|滴滴|高铁|火车|机票', null, '0', 'admin', sysdate(), '', null, '交通分类匹配规则');
 insert into fin_category_rules values(4, 4, '房租|水电|物业|宽带|煤气|有线', null, '0', 'admin', sysdate(), '', null, '住房分类匹配规则');
-insert into fin_category_rules values(5, 5, '电影|游戏|KTV|演唱会|旅游|景点', null, '0', 'admin', sysdate(), '', null, '娱乐分类匹配规则'); 
+insert into fin_category_rules values(5, 5, '电影|游戏|KTV|演唱会|旅游|景点', null, '0', 'admin', sysdate(), '', null, '娱乐分类匹配规则');
