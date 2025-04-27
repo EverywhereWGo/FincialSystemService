@@ -84,7 +84,7 @@ public class FinUserController extends BaseController {
     @Log(title = "财务系统用户", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody FinUser finUser) {
-        finUser.setUpdateBy(getUsername());
+        finUser.setUpdateBy("mobile_user");
         return toAjax(finUserService.updateFinUser(finUser));
     }
 
@@ -103,7 +103,7 @@ public class FinUserController extends BaseController {
     @Log(title = "财务系统用户", businessType = BusinessType.UPDATE)
     @PutMapping("/resetPwd")
     public AjaxResult resetPwd(@RequestBody FinUser finUser) {
-        finUser.setUpdateBy(getUsername());
+        finUser.setUpdateBy("mobile_user");
         // 将userId参数映射到id字段
         if (finUser.getId() == null && finUser.getParams().get("userId") != null) {
             finUser.setId(Long.valueOf(finUser.getParams().get("userId").toString()));
@@ -180,14 +180,14 @@ public class FinUserController extends BaseController {
             String avatarPath = RuoYiConfig.getAvatarPath();
             // 上传并返回新文件名称
             String avatar = FileUploadUtils.upload(avatarPath, avatarfile, MimeTypeUtils.IMAGE_EXTENSION);
-            
+
             // 更新用户头像
             FinUser user = new FinUser();
             user.setId(userId);
             user.setAvatar(avatar);
-            user.setUpdateBy(getUsername());
+            user.setUpdateBy("mobile_user");
             finUserService.updateFinUser(user);
-            
+
             // 返回成功和图片URL
             HashMap<String, String> resultMap = new HashMap<>();
             resultMap.put("imgUrl", avatar);

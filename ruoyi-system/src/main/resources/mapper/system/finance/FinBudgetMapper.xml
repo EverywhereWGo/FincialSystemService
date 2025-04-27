@@ -12,8 +12,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="year"              column="year"              />
         <result property="month"             column="month"             />
         <result property="amount"            column="amount"            />
+        <result property="usedAmount"        column="usedAmount"        />
         <result property="warningThreshold"  column="warning_threshold" />
         <result property="warned"            column="warned"            />
+        <result property="usedPercentage"    column="usedPercentage"    />
+        <result property="notifyEnable"      column="notifyEnable"      />
         <result property="delFlag"           column="del_flag"          />
         <result property="createBy"          column="create_by"         />
         <result property="createTime"        column="create_time"       />
@@ -23,8 +26,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectFinBudgetVo">
-        select b.id, b.user_id, b.category_id, c.name as category_name, b.amount, b.year, b.month,
-               b.warning_threshold, b.warned, b.del_flag, b.create_by, b.create_time, b.update_by, b.update_time, b.remark
+        select b.id, b.user_id, b.category_id, c.name as category_name, b.amount, b.usedAmount, b.year, b.month,
+               b.warning_threshold, b.warned, b.usedPercentage, b.notifyEnable, b.del_flag, b.create_by, b.create_time, b.update_by, b.update_time, b.remark
         from fin_budgets b
         left join fin_categories c on b.category_id = c.id
     </sql>
@@ -113,8 +116,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             year,
             month,
             amount,
+            usedAmount,
             warning_threshold,
             warned,
+            usedPercentage,
+            notifyEnable,
             create_by,
             create_time,
             remark
@@ -123,9 +129,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{categoryId},
             #{year,jdbcType=INTEGER},
             #{month,jdbcType=INTEGER},
-            #{amount},
+            #{amount,jdbcType=DECIMAL,defaultValue=0},
+            #{usedAmount,jdbcType=DECIMAL,defaultValue=0},
             #{warningThreshold},
             #{warned},
+            #{usedPercentage,jdbcType=DECIMAL,defaultValue=0},
+            #{notifyEnable,jdbcType=BOOLEAN,defaultValue=false},
             #{createBy},
             sysdate(),
             #{remark}
@@ -140,6 +149,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="amount != null">amount = #{amount},</if>
             <if test="warningThreshold != null">warning_threshold = #{warningThreshold},</if>
             <if test="warned != null">warned = #{warned},</if>
+            <if test="notifyEnable != null">notifyEnable = #{notifyEnable},</if>
             <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
             update_time = sysdate(),
             <if test="remark != null and remark != ''">remark = #{remark},</if>
@@ -151,6 +161,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <update id="updateBudgetWarningStatus" parameterType="FinBudget">
         update fin_budgets
         set warned = #{warned},
+        update_time = sysdate()
+        where id = #{id}
+    </update>
+
+    <!-- 更新预算使用情况 -->
+    <update id="updateBudgetUsage" parameterType="FinBudget">
+        update fin_budgets
+        set usedAmount = #{usedAmount},
+        usedPercentage = #{usedPercentage},
+        warned = #{warned},
         update_time = sysdate()
         where id = #{id}
     </update>

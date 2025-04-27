@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import javax.validation.constraints.DecimalMax;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
+
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import com.ruoyi.common.annotation.Excel;
@@ -12,59 +13,96 @@ import com.ruoyi.common.core.domain.BaseEntity;
 
 /**
  * 财务系统预算表 fin_budgets
- * 
+ *
  * @author ruoyi
  */
-public class FinBudget extends BaseEntity
-{
+public class FinBudget extends BaseEntity {
     private static final long serialVersionUID = 1L;
 
-    /** 预算ID */
+    /**
+     * 预算ID
+     */
     @Excel(name = "预算序号", cellType = ColumnType.NUMERIC)
     private Long id;
 
-    /** 用户ID */
+    /**
+     * 用户ID
+     */
     @Excel(name = "用户ID", type = Excel.Type.IMPORT)
     private Long userId;
 
-    /** 分类ID（NULL表示总预算） */
+    /**
+     * 分类ID（NULL表示总预算）
+     */
     @Excel(name = "分类ID", type = Excel.Type.IMPORT)
     private Long categoryId;
 
-    /** 分类名称（非数据库字段） */
+    /**
+     * 分类名称（非数据库字段）
+     */
     @Excel(name = "分类名称")
     private String categoryName;
 
-    /** 年份 */
+    /**
+     * 年份
+     */
     @Excel(name = "年份")
     private Integer year;
 
-    /** 月份 */
+    /**
+     * 月份
+     */
     @Excel(name = "月份")
     private Integer month;
 
-    /** 预算金额 */
+    /**
+     * 预算金额
+     */
     @Excel(name = "预算金额", cellType = ColumnType.NUMERIC)
     private BigDecimal amount;
 
-    /** 预警阈值（百分比） */
+    /**
+     * 预警阈值（百分比）
+     */
     @Excel(name = "预警阈值", cellType = ColumnType.NUMERIC, suffix = "%")
     private BigDecimal warningThreshold;
 
-    /** 是否已预警 */
+    /**
+     * 是否已预警
+     */
     @Excel(name = "是否已预警", readConverterExp = "0=否,1=是")
     private Boolean warned;
 
-    /** 删除标志（0代表存在 2代表删除） */
+    /**
+     * 删除标志（0代表存在 2代表删除）
+     */
     private String delFlag;
 
-    /** 已使用金额（非数据库字段） */
+    /**
+     * 已使用金额
+     */
     @Excel(name = "已使用金额", cellType = ColumnType.NUMERIC)
     private BigDecimal usedAmount;
 
-    /** 使用百分比（非数据库字段） */
+    /**
+     * 已使用百分比
+     */
     @Excel(name = "使用百分比", cellType = ColumnType.NUMERIC, suffix = "%")
     private BigDecimal usedPercentage;
+
+    /**
+     * 是否启动预警提醒
+     */
+    private Boolean notifyEnable;
+
+    @NotNull(message = "是否启动预警提醒不能为空")
+    public Boolean getNotifyEnable() {
+        return notifyEnable;
+    }
+
+    public void setNotifyEnable(Boolean notifyEnable) {
+        this.notifyEnable = notifyEnable;
+    }
 
     public Long getId() {
         return id;
@@ -173,23 +211,23 @@ public class FinBudget extends BaseEntity
     @Override
     public String toString() {
         return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE)
-            .append("id", getId())
-            .append("userId", getUserId())
-            .append("categoryId", getCategoryId())
-            .append("categoryName", getCategoryName())
-            .append("year", getYear())
-            .append("month", getMonth())
-            .append("amount", getAmount())
-            .append("warningThreshold", getWarningThreshold())
-            .append("warned", getWarned())
-            .append("delFlag", getDelFlag())
-            .append("usedAmount", getUsedAmount())
-            .append("usedPercentage", getUsedPercentage())
-            .append("createBy", getCreateBy())
-            .append("createTime", getCreateTime())
-            .append("updateBy", getUpdateBy())
-            .append("updateTime", getUpdateTime())
-            .append("remark", getRemark())
-            .toString();
+                .append("id", getId())
+                .append("userId", getUserId())
+                .append("categoryId", getCategoryId())
+                .append("categoryName", getCategoryName())
+                .append("year", getYear())
+                .append("month", getMonth())
+                .append("amount", getAmount())
+                .append("warningThreshold", getWarningThreshold())
+                .append("warned", getWarned())
+                .append("delFlag", getDelFlag())
+                .append("usedAmount", getUsedAmount())
+                .append("usedPercentage", getUsedPercentage())
+                .append("createBy", getCreateBy())
+                .append("createTime", getCreateTime())
+                .append("updateBy", getUpdateBy())
+                .append("updateTime", getUpdateTime())
+                .append("remark", getRemark())
+                .toString();
     }
-} 
+}

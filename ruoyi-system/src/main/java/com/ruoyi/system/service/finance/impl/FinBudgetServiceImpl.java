@@ -143,31 +143,28 @@ public class FinBudgetServiceImpl implements IFinBudgetService
             categoryBudget.put("categoryName", budget.getCategoryName());
             categoryBudget.put("amount", budget.getAmount());
             
-            BigDecimal spentAmount = BigDecimal.ZERO;
-            if (budget.getCategoryId() != null) {
-                // 如果是分类预算，查询该分类的支出
-                Map<String, Object> categoryParams = new HashMap<>(timeParams);
-                categoryParams.put("categoryId", budget.getCategoryId());
-                BigDecimal categorySpent = finTransactionMapper.selectExpenseAmountByCategoryAndMonth(categoryParams);
-                if (categorySpent != null) {
-                    spentAmount = categorySpent;
-                }
-            } else {
-                // 如果是总预算，使用总支出
-                spentAmount = totalSpent;
+            // 使用budget中的usedAmount，而不是重新计算
+            BigDecimal spentAmount = budget.getUsedAmount();
+            if (spentAmount == null) {
+                spentAmount = BigDecimal.ZERO;
             }
             
             categoryBudget.put("spentAmount", spentAmount);
             BigDecimal remainAmount = budget.getAmount().subtract(spentAmount);
+            if (remainAmount.compareTo(BigDecimal.ZERO) < 0) {
+                remainAmount = BigDecimal.ZERO;
+            }
             categoryBudget.put("remainAmount", remainAmount);
             
-            // 计算使用百分比
-            BigDecimal percentage = BigDecimal.ZERO;
-            if (budget.getAmount().compareTo(BigDecimal.ZERO) > 0) {
-                percentage = spentAmount.multiply(new BigDecimal("100"))
-                        .divide(budget.getAmount(), 2, RoundingMode.HALF_UP);
+            // 使用budget中的usedPercentage，而不是重新计算
+            BigDecimal percentage = budget.getUsedPercentage();
+            if (percentage == null) {
+                percentage = BigDecimal.ZERO;
             }
             categoryBudget.put("percentage", percentage);
+            
+            // 添加notifyEnable字段
+            categoryBudget.put("notifyEnable", budget.getNotifyEnable());
             
             categories.add(categoryBudget);
             
@@ -294,5 +291,75 @@ public class FinBudgetServiceImpl implements IFinBudgetService
         // 简化实现，实际应使用日期库计算
         // 时间戳为下月1日0时0分0秒减1毫秒
         return 1580515199999L; // 示例时间戳，实际应根据传入的年月计算
+    }
+
+    /**
+     * 更新预算使用情况
+     * 
+     * @param userId 用户ID
+     * @param categoryId 分类ID
+     * @param year 年份
+     * @param month 月份
+     * @return 结果
+     */
+    @Override
+    public int updateBudgetUsage(Long userId, Long categoryId, Integer year, Integer month)
+    {
+        // 查询参数
+        Map<String, Object> params = new HashMap<>();
+        params.put("userId", userId);
+        params.put("year", year);
+        params.put("month", month);
+        params.put("categoryId", categoryId);
+        
+        // 查询预算
+        FinBudget budget = finBudgetMapper.selectFinBudgetByUserAndCategory(params);
+        if (budget == null)
+        {
+            return 0;
+        }
+        
+        // 查询交易数据计算已用金额
+        Map<String, Object> timeParams = new HashMap<>();
+        timeParams.put("userId", userId);
+        timeParams.put("categoryId", categoryId);
+        
+        // 计算月的开始和结束时间戳
+        Long startTime = calculateMonthStartTime(year, month);
+        Long endTime = calculateMonthEndTime(year, month);
+        timeParams.put("startTime", startTime);
+        timeParams.put("endTime", endTime);
+        timeParams.put("type", 1); // 支出类型
+        
+        // 查询指定分类的支出金额
+        BigDecimal spentAmount = finTransactionMapper.selectExpenseAmountByCategoryAndMonth(timeParams);
+        if (spentAmount == null)
+        {
+            spentAmount = BigDecimal.ZERO;
+        }
+        
+        // 更新预算使用情况
+        budget.setUsedAmount(spentAmount);
+        
+        // 计算已使用百分比
+        if (budget.getAmount().compareTo(BigDecimal.ZERO) > 0)
+        {
+            BigDecimal percentage = spentAmount.multiply(new BigDecimal("100"))
+                    .divide(budget.getAmount(), 2, RoundingMode.HALF_UP);
+            budget.setUsedPercentage(percentage);
+            
+            // 检查是否超过预警阈值
+            if (!budget.getWarned() && percentage.compareTo(budget.getWarningThreshold()) >= 0)
+            {
+                budget.setWarned(true);
+            }
+        }
+        else
+        {
+            budget.setUsedPercentage(BigDecimal.ZERO);
+        }
+        
+        // 更新预算
+        return finBudgetMapper.updateBudgetUsage(budget);
     }
 }

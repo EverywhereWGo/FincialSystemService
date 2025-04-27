@@ -114,4 +114,15 @@ public interface IFinBudgetService
      * @return 结果
      */
     public boolean checkBudgetUnique(FinBudget finBudget);
+
+    /**
+     * 更新预算使用情况
+     * 
+     * @param userId 用户ID
+     * @param categoryId 分类ID
+     * @param year 年份
+     * @param month 月份
+     * @return 结果
+     */
+    public int updateBudgetUsage(Long userId, Long categoryId, Integer year, Integer month);
 }

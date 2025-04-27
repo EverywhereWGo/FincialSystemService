@@ -27,7 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 财务分类Controller
- * 
+ *
  * @author ruoyi
  */
 @RestController
@@ -83,7 +83,7 @@ public class FinCategoryController extends BaseController
         // 设置用户ID和创建者
         finCategory.setUserId(getUserId());
         finCategory.setCreateBy(getUsername());
-        
+
         return toAjax(finCategoryService.insertFinCategory(finCategory));
     }
 
@@ -99,8 +99,8 @@ public class FinCategoryController extends BaseController
             return AjaxResult.error("修改财务分类'" + finCategory.getName() + "'失败，分类名称已存在");
         }
         // 设置更新者
-        finCategory.setUpdateBy(getUsername());
-        
+        finCategory.setUpdateBy("mobile_user");
+
         return toAjax(finCategoryService.updateFinCategory(finCategory));
     }
 
@@ -113,7 +113,7 @@ public class FinCategoryController extends BaseController
     {
         return toAjax(finCategoryService.deleteFinCategoryByIds(ids));
     }
-    
+
     /**
      * 上传分类图标
      */
@@ -125,16 +125,16 @@ public class FinCategoryController extends BaseController
             String iconPath = RuoYiConfig.getProfile() + "/category/icon";
             // 上传并返回新文件名称
             String iconUrl = FileUploadUtils.upload(iconPath, file, MimeTypeUtils.IMAGE_EXTENSION);
-            
+
             // 如果提供了分类ID，则更新分类图标路径
             if (categoryId != null) {
                 FinCategory category = new FinCategory();
                 category.setId(categoryId);
                 category.setIcon(iconUrl);
-                category.setUpdateBy(getUsername());
+                category.setUpdateBy("mobile_user");
                 finCategoryService.updateFinCategory(category);
             }
-            
+
             // 返回成功和图片URL
             HashMap<String, String> resultMap = new HashMap<>();
             resultMap.put("iconUrl", iconUrl);
@@ -142,7 +142,7 @@ public class FinCategoryController extends BaseController
         }
         return AjaxResult.error("上传图标异常，请重新上传");
     }
-    
+
     /**
      * 根据类型获取分类
      */
@@ -152,4 +152,4 @@ public class FinCategoryController extends BaseController
         List<FinCategory> list = finCategoryService.selectFinCategoryByType(type);
         return AjaxResult.success(list);
     }
-} 
+}

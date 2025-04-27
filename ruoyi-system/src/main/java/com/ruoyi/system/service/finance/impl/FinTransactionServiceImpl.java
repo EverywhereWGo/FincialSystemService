@@ -3,10 +3,12 @@ package com.ruoyi.system.service.finance.impl;
 import java.util.List;
 import java.util.Map;
 import java.math.BigDecimal;
+import java.util.Calendar;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.ruoyi.system.mapper.finance.FinTransactionMapper;
 import com.ruoyi.system.domain.finance.FinTransaction;
+import com.ruoyi.system.service.finance.IFinBudgetService;
 import com.ruoyi.system.service.finance.IFinTransactionService;
 
 /**
@@ -19,6 +21,9 @@ public class FinTransactionServiceImpl implements IFinTransactionService
 {
     @Autowired
     private FinTransactionMapper finTransactionMapper;
+
+    @Autowired
+    private IFinBudgetService finBudgetService;
 
     /**
      * 查询财务交易记录信息
@@ -137,7 +142,14 @@ public class FinTransactionServiceImpl implements IFinTransactionService
     @Override
     public int insertFinTransaction(FinTransaction finTransaction)
     {
-        return finTransactionMapper.insertFinTransaction(finTransaction);
+        int rows = finTransactionMapper.insertFinTransaction(finTransaction);
+        
+        // 如果为支出类型且添加成功，更新预算使用情况
+        if (rows > 0 && finTransaction.getType() != null && finTransaction.getType() == 1) {
+            updateBudgetUsageForTransaction(finTransaction);
+        }
+        
+        return rows;
     }
 
     /**
@@ -149,7 +161,14 @@ public class FinTransactionServiceImpl implements IFinTransactionService
     @Override
     public int updateFinTransaction(FinTransaction finTransaction)
     {
-        return finTransactionMapper.updateFinTransaction(finTransaction);
+        int rows = finTransactionMapper.updateFinTransaction(finTransaction);
+        
+        // 如果为支出类型且修改成功，更新预算使用情况
+        if (rows > 0 && finTransaction.getType() != null && finTransaction.getType() == 1) {
+            updateBudgetUsageForTransaction(finTransaction);
+        }
+        
+        return rows;
     }
 
     /**
@@ -161,7 +180,17 @@ public class FinTransactionServiceImpl implements IFinTransactionService
     @Override
     public int deleteFinTransactionById(Long id)
     {
-        return finTransactionMapper.deleteFinTransactionById(id);
+        // 先获取交易记录信息
+        FinTransaction transaction = selectFinTransactionById(id);
+        
+        int rows = finTransactionMapper.deleteFinTransactionById(id);
+        
+        // 如果为支出类型且删除成功，更新预算使用情况
+        if (rows > 0 && transaction != null && transaction.getType() != null && transaction.getType() == 1) {
+            updateBudgetUsageForTransaction(transaction);
+        }
+        
+        return rows;
     }
 
     /**
@@ -173,7 +202,33 @@ public class FinTransactionServiceImpl implements IFinTransactionService
     @Override
     public int deleteFinTransactionByIds(Long[] ids)
     {
-        return finTransactionMapper.deleteFinTransactionByIds(ids);
+        // 先获取所有需要删除的交易记录
+        for (Long id : ids) {
+            deleteFinTransactionById(id);
+        }
+        
+        return ids.length;
+    }
+    
+    /**
+     * 更新与交易相关的预算使用情况
+     * 
+     * @param transaction 交易记录
+     */
+    private void updateBudgetUsageForTransaction(FinTransaction transaction) {
+        // 从交易时间中获取年月
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(transaction.getTransactionTime());
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH) + 1; // Calendar月份从0开始
+        
+        // 更新该分类的预算使用情况
+        finBudgetService.updateBudgetUsage(
+            transaction.getUserId(), 
+            transaction.getCategoryId(), 
+            year, 
+            month
+        );
     }
     
     /**

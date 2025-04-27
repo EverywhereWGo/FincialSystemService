@@ -21,7 +21,7 @@ import com.ruoyi.common.core.page.TableDataInfo;
 
 /**
  * 分类规则Controller
- * 
+ *
  * @author ruoyi
  */
 @RestController
@@ -81,7 +81,7 @@ public class FinCategoryRuleController extends BaseController
     @PutMapping
     public AjaxResult edit(@RequestBody FinCategoryRule finCategoryRule)
     {
-        finCategoryRule.setUpdateBy(getUsername());
+        finCategoryRule.setUpdateBy("mobile_user");
         return toAjax(finCategoryRuleService.updateFinCategoryRule(finCategoryRule));
     }
 

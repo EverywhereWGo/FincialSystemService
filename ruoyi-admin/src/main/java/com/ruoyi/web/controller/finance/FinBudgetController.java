@@ -117,6 +117,22 @@ public class FinBudgetController extends BaseController {
             finBudget.setWarned(false);
         }
 
+        // 新增记录时，设置amount和usedAmount的默认值为0
+        if (finBudget.getAmount() == null) {
+            finBudget.setAmount(new java.math.BigDecimal("0"));
+        }
+
+        // 确保usedAmount初始值为0
+        finBudget.setUsedAmount(new java.math.BigDecimal("0"));
+
+        // 设置usedPercentage初始值为0
+        finBudget.setUsedPercentage(new java.math.BigDecimal("0"));
+
+        // 如果notifyEnable没有设置，默认为false
+        if (finBudget.getNotifyEnable() == null) {
+            finBudget.setNotifyEnable(false);
+        }
+
         if (!finBudgetService.checkBudgetUnique(finBudget)) {
             return AjaxResult.error("新增预算失败，该用户指定月份的该分类预算已存在");
         }
@@ -141,12 +157,28 @@ public class FinBudgetController extends BaseController {
             finBudget.setWarned(false);
         }
 
+        // 查询原始预算数据以获取不允许修改的字段值
+        FinBudget originalBudget = finBudgetService.selectFinBudgetById(finBudget.getId());
+        if (originalBudget == null) {
+            return AjaxResult.error("修改预算失败，预算记录不存在");
+        }
+
+        // 不允许修改amount和usedAmount，只能修改notifyEnable
+        finBudget.setAmount(originalBudget.getAmount());
+        finBudget.setUsedAmount(originalBudget.getUsedAmount());
+        finBudget.setUsedPercentage(originalBudget.getUsedPercentage());
+
+        // 确保notifyEnable有值
+        if (finBudget.getNotifyEnable() == null) {
+            finBudget.setNotifyEnable(originalBudget.getNotifyEnable());
+        }
+
         if (!finBudgetService.checkBudgetUnique(finBudget)) {
             return AjaxResult.error("修改预算失败，该用户指定月份的该分类预算已存在");
         }
 
         try {
-            finBudget.setUpdateBy(getUsername());
+            finBudget.setUpdateBy("mobile_user");
         } catch (Exception e) {
             finBudget.setUpdateBy("mobile_user");
         }

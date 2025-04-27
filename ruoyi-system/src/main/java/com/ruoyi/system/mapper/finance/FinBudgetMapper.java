@@ -84,6 +84,22 @@ public interface FinBudgetMapper
     public int updateBudgetWarningStatus(FinBudget finBudget);
 
     /**
+     * 更新预算使用情况
+     * 
+     * @param finBudget 预算信息
+     * @return 结果
+     */
+    public int updateBudgetUsage(FinBudget finBudget);
+
+    /**
+     * 标记已警告
+     * 
+     * @param id 预算ID
+     * @return 结果
+     */
+    public int markAsWarned(Long id);
+
+    /**
      * 删除预算
      * 
      * @param id 预算ID

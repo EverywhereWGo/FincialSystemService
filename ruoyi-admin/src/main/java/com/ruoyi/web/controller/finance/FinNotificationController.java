@@ -24,7 +24,7 @@ import com.ruoyi.web.controller.finance.vo.BatchReadRequest;
 
 /**
  * 系统通知Controller
- * 
+ *
  * @author ruoyi
  */
 @RestController
@@ -84,7 +84,7 @@ public class FinNotificationController extends BaseController
     @PutMapping
     public AjaxResult edit(@RequestBody FinNotification finNotification)
     {
-        finNotification.setUpdateBy(getUsername());
+        finNotification.setUpdateBy("mobile_user");
         return toAjax(finNotificationService.updateFinNotification(finNotification));
     }
 
@@ -97,7 +97,7 @@ public class FinNotificationController extends BaseController
     {
         return toAjax(finNotificationService.deleteFinNotificationByIds(ids));
     }
-    
+
     /**
      * 将通知标记为已读
      */
@@ -107,7 +107,7 @@ public class FinNotificationController extends BaseController
     {
         return toAjax(finNotificationService.markAsRead(id));
     }
-    
+
     /**
      * 批量标记通知为已读
      */
@@ -117,10 +117,10 @@ public class FinNotificationController extends BaseController
     {
         Long userId = Long.valueOf(params.get("userId").toString());
         List<Long> ids = (List<Long>) params.get("ids");
-        
+
         return toAjax(finNotificationService.batchMarkAsRead(userId, ids));
     }
-    
+
     /**
      * 获取用户未读通知
      */
