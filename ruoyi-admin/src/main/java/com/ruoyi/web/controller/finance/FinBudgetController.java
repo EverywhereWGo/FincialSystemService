@@ -178,7 +178,7 @@ public class FinBudgetController extends BaseController {
         }
 
         try {
-            finBudget.setUpdateBy("mobile_user");
+            finBudget.setUpdateBy(getUsername());
         } catch (Exception e) {
             finBudget.setUpdateBy("mobile_user");
         }
