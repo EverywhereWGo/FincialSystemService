@@ -10,6 +10,8 @@ import com.ruoyi.system.mapper.finance.FinTransactionMapper;
 import com.ruoyi.system.domain.finance.FinTransaction;
 import com.ruoyi.system.service.finance.IFinBudgetService;
 import com.ruoyi.system.service.finance.IFinTransactionService;
+import com.ruoyi.system.service.finance.task.BudgetWarningTask;
+import com.ruoyi.system.service.finance.util.FinanceThreadPoolUtil;
 
 /**
  * 财务交易记录 服务层实现
@@ -24,6 +26,9 @@ public class FinTransactionServiceImpl implements IFinTransactionService
 
     @Autowired
     private IFinBudgetService finBudgetService;
+
+    @Autowired
+    private BudgetWarningTask budgetWarningTask;
 
     /**
      * 查询财务交易记录信息
@@ -146,7 +151,11 @@ public class FinTransactionServiceImpl implements IFinTransactionService
         
         // 如果为支出类型且添加成功，更新预算使用情况
         if (rows > 0 && finTransaction.getType() != null && finTransaction.getType() == 1) {
+            // 更新预算使用情况
             updateBudgetUsageForTransaction(finTransaction);
+            
+            // 异步执行预算预警检查
+            checkBudgetWarningAsync(finTransaction);
         }
         
         return rows;
@@ -289,5 +298,16 @@ public class FinTransactionServiceImpl implements IFinTransactionService
     public List<Map<String, Object>> selectDailyTransactionsByTimeRange(Map<String, Object> params)
     {
         return finTransactionMapper.selectDailyTransactionsByTimeRange(params);
+    }
+
+    /**
+     * 异步检查预算预警
+     * 
+     * @param finTransaction 交易记录
+     */
+    private void checkBudgetWarningAsync(FinTransaction finTransaction) {
+        // 使用线程池执行任务
+        budgetWarningTask.setTransaction(finTransaction);
+        FinanceThreadPoolUtil.execute(budgetWarningTask);
     }
 } 

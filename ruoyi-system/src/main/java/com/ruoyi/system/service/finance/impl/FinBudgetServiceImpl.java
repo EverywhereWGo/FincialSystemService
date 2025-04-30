@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Calendar;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -279,18 +280,30 @@ public class FinBudgetServiceImpl implements IFinBudgetService
      * 计算月份开始时间的时间戳
      */
     private Long calculateMonthStartTime(Integer year, Integer month) {
-        // 简化实现，实际应使用日期库计算
-        // 时间戳为当月1日0时0分0秒
-        return 1577836800000L; // 示例时间戳，实际应根据传入的年月计算
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.YEAR, year);
+        calendar.set(Calendar.MONTH, month - 1); // Calendar月份从0开始
+        calendar.set(Calendar.DAY_OF_MONTH, 1);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTimeInMillis();
     }
     
     /**
      * 计算月份结束时间的时间戳
      */
     private Long calculateMonthEndTime(Integer year, Integer month) {
-        // 简化实现，实际应使用日期库计算
-        // 时间戳为下月1日0时0分0秒减1毫秒
-        return 1580515199999L; // 示例时间戳，实际应根据传入的年月计算
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.YEAR, year);
+        calendar.set(Calendar.MONTH, month); // 下个月
+        calendar.set(Calendar.DAY_OF_MONTH, 1); // 下个月1号
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTimeInMillis() - 1; // 减1毫秒，表示当前月最后一天的最后一毫秒
     }
 
     /**
@@ -331,12 +344,19 @@ public class FinBudgetServiceImpl implements IFinBudgetService
         timeParams.put("endTime", endTime);
         timeParams.put("type", 1); // 支出类型
         
+        // 日志记录
+        System.out.println("更新预算使用情况: userId=" + userId + ", categoryId=" + categoryId + 
+                          ", year=" + year + ", month=" + month + 
+                          ", startTime=" + startTime + ", endTime=" + endTime);
+        
         // 查询指定分类的支出金额
         BigDecimal spentAmount = finTransactionMapper.selectExpenseAmountByCategoryAndMonth(timeParams);
         if (spentAmount == null)
         {
             spentAmount = BigDecimal.ZERO;
         }
+        
+        System.out.println("预算金额: " + budget.getAmount() + ", 已用金额: " + spentAmount);
         
         // 更新预算使用情况
         budget.setUsedAmount(spentAmount);
@@ -348,10 +368,13 @@ public class FinBudgetServiceImpl implements IFinBudgetService
                     .divide(budget.getAmount(), 2, RoundingMode.HALF_UP);
             budget.setUsedPercentage(percentage);
             
+            System.out.println("使用百分比: " + percentage + ", 预警阈值: " + budget.getWarningThreshold());
+            
             // 检查是否超过预警阈值
             if (!budget.getWarned() && percentage.compareTo(budget.getWarningThreshold()) >= 0)
             {
                 budget.setWarned(true);
+                System.out.println("设置预警状态为true");
             }
         }
         else

@@ -51,31 +51,32 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <insert id="insertFinNotification" parameterType="com.ruoyi.system.domain.finance.FinNotification" useGeneratedKeys="true" keyProperty="id">
         insert into fin_notification
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            <if test="userId != null">user_id,</if>
-            <if test="title != null">title,</if>
-            <if test="content != null">content,</if>
-            <if test="type != null">type,</if>
-            <if test="read != null">is_read,</if>
-            <if test="createBy != null">create_by,</if>
+            <if test="id != null">id,</if>
+            user_id,
+            title,
+            content,
+            type,
+            is_read,
+            <if test="createBy != null and createBy != ''">create_by,</if>
             create_time,
-            <if test="updateBy != null">update_by,</if>
-            <if test="updateTime != null">update_time,</if>
-            <if test="remark != null">remark,</if>
+            <if test="remark != null and remark != ''">remark,</if>
             del_flag,
-         </trim>
+        </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
-            <if test="userId != null">#{userId},</if>
-            <if test="title != null">#{title},</if>
-            <if test="content != null">#{content},</if>
-            <if test="type != null">#{type},</if>
-            <if test="read != null">#{read},</if>
-            <if test="createBy != null">#{createBy},</if>
-            sysdate(),
-            <if test="updateBy != null">#{updateBy},</if>
-            <if test="updateTime != null">#{updateTime},</if>
-            <if test="remark != null">#{remark},</if>
+            <if test="id != null">#{id},</if>
+            #{userId},
+            #{title},
+            #{content},
+            #{type},
+            #{read},
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            <choose>
+                <when test="createTime != null">#{createTime},</when>
+                <otherwise>sysdate(),</otherwise>
+            </choose>
+            <if test="remark != null and remark != ''">#{remark},</if>
             '0',
-         </trim>
+        </trim>
     </insert>
 
     <update id="updateFinNotification" parameterType="com.ruoyi.system.domain.finance.FinNotification">

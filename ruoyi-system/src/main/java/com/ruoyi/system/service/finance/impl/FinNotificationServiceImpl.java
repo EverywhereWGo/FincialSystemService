@@ -1,6 +1,9 @@
 package com.ruoyi.system.service.finance.impl;
 
+import java.util.Date;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.ruoyi.system.mapper.finance.FinNotificationMapper;
@@ -15,6 +18,8 @@ import com.ruoyi.system.service.finance.IFinNotificationService;
 @Service
 public class FinNotificationServiceImpl implements IFinNotificationService
 {
+    private static final Logger log = LoggerFactory.getLogger(FinNotificationServiceImpl.class);
+    
     @Autowired
     private FinNotificationMapper finNotificationMapper;
 
@@ -63,7 +68,89 @@ public class FinNotificationServiceImpl implements IFinNotificationService
     @Override
     public int insertFinNotification(FinNotification finNotification)
     {
-        return finNotificationMapper.insertFinNotification(finNotification);
+        try {
+            log.info("开始创建通知: userId={}, title={}, type={}", 
+                    finNotification.getUserId(), finNotification.getTitle(), finNotification.getType());
+            
+            // 确保必要字段不为空
+            if (finNotification.getCreateTime() == null) {
+                finNotification.setCreateTime(new Date());
+            }
+            
+            if (finNotification.getRead() == null) {
+                finNotification.setRead(0); // 默认未读
+            }
+            
+            if (finNotification.getCreateBy() == null || finNotification.getCreateBy().isEmpty()) {
+                finNotification.setCreateBy("system");
+            }
+            
+            if (finNotification.getDelFlag() == null || finNotification.getDelFlag().isEmpty()) {
+                finNotification.setDelFlag("0");
+            }
+            
+            // 打印完整的通知对象信息
+            log.info("准备插入通知记录: userId={}, title={}, content长度={}, type={}, read={}, createBy={}, delFlag={}",
+                    finNotification.getUserId(), finNotification.getTitle(), 
+                    (finNotification.getContent() != null ? finNotification.getContent().length() : 0),
+                    finNotification.getType(), finNotification.getRead(), 
+                    finNotification.getCreateBy(), finNotification.getDelFlag());
+            
+            // 执行插入操作
+            int result = finNotificationMapper.insertFinNotification(finNotification);
+            
+            if (result > 0) {
+                log.info("通知创建成功: id={}, userId={}", finNotification.getId(), finNotification.getUserId());
+            } else {
+                log.error("通知创建失败: userId={}, title={}, result={}", 
+                         finNotification.getUserId(), finNotification.getTitle(), result);
+            }
+            
+            return result;
+        } catch (Exception e) {
+            log.error("创建通知异常: userId={}, title={}, error={}",
+                    finNotification.getUserId(), finNotification.getTitle(), e.getMessage());
+            log.error("异常详情", e);
+            
+            // 重新尝试简化的插入
+            try {
+                log.info("尝试使用简化方式重新插入");
+                // 确保只包含必要字段
+                FinNotification simpleNotification = new FinNotification();
+                simpleNotification.setUserId(finNotification.getUserId());
+                simpleNotification.setTitle(finNotification.getTitle());
+                
+                // 如果内容太长，可能是问题所在，尝试截取
+                String content = finNotification.getContent();
+                if (content != null && content.length() > 2000) {
+                    content = content.substring(0, 2000) + "...";
+                }
+                simpleNotification.setContent(content);
+                
+                simpleNotification.setType(finNotification.getType());
+                simpleNotification.setRead(0);
+                simpleNotification.setCreateBy("system");
+                simpleNotification.setCreateTime(new Date());
+                simpleNotification.setDelFlag("0");
+                
+                log.info("简化通知记录: userId={}, title={}, type={}", 
+                        simpleNotification.getUserId(), simpleNotification.getTitle(), simpleNotification.getType());
+                
+                int retryResult = finNotificationMapper.insertFinNotification(simpleNotification);
+                if (retryResult > 0) {
+                    log.info("使用简化方式重新插入成功: id={}", simpleNotification.getId());
+                    // 如果重试成功，设置原通知的ID
+                    finNotification.setId(simpleNotification.getId());
+                    return retryResult;
+                } else {
+                    log.error("使用简化方式重新插入也失败: result={}", retryResult);
+                }
+                return retryResult;
+            } catch (Exception ex) {
+                log.error("使用简化方式重新插入异常: {}", ex.getMessage(), ex);
+                return 0;
+            }
+        }
     }
 
     /**
@@ -156,7 +243,7 @@ public class FinNotificationServiceImpl implements IFinNotificationService
     {
         FinNotification notification = new FinNotification();
         notification.setUserId(userId);
-        notification.setTitle("预算使用预警");
+        notification.setTitle("预算超出提醒");
 
         StringBuilder content = new StringBuilder();
         content.append("您的");
@@ -176,7 +263,16 @@ public class FinNotificationServiceImpl implements IFinNotificationService
         notification.setContent(content.toString());
         notification.setType("budget_warning");
         notification.setRead(0);
+        notification.setCreateBy("system");
+        notification.setCreateTime(new Date());
+        notification.setDelFlag("0");
 
-        return finNotificationMapper.insertFinNotification(notification);
+        try {
+            return insertFinNotification(notification);
+        } catch (Exception e) {
+            log.error("创建预算预警通知异常: userId={}, categoryName={}, error={}", 
+                    userId, categoryName, e.getMessage(), e);
+            return 0;
+        }
     }
 }
