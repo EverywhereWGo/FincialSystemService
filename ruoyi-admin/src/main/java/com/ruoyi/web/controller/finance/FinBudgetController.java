@@ -164,7 +164,6 @@ public class FinBudgetController extends BaseController {
         }
 
         // 不允许修改amount和usedAmount，只能修改notifyEnable
-        finBudget.setAmount(originalBudget.getAmount());
         finBudget.setUsedAmount(originalBudget.getUsedAmount());
         finBudget.setUsedPercentage(originalBudget.getUsedPercentage());
 
