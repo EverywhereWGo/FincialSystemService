@@ -12,11 +12,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="year"              column="year"              />
         <result property="month"             column="month"             />
         <result property="amount"            column="amount"            />
-        <result property="usedAmount"        column="usedAmount"        />
+        <result property="usedAmount"        column="used_amount"        />
         <result property="warningThreshold"  column="warning_threshold" />
         <result property="warned"            column="warned"            />
-        <result property="usedPercentage"    column="usedPercentage"    />
-        <result property="notifyEnable"      column="notifyEnable"      />
+        <result property="usedPercentage"    column="used_percentage"    />
+        <result property="notifyEnable"      column="notify_enabled"      />
         <result property="delFlag"           column="del_flag"          />
         <result property="createBy"          column="create_by"         />
         <result property="createTime"        column="create_time"       />
@@ -26,8 +26,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectFinBudgetVo">
-        select b.id, b.user_id, b.category_id, c.name as category_name, b.amount, b.usedAmount, b.year, b.month,
-               b.warning_threshold, b.warned, b.usedPercentage, b.notifyEnable, b.del_flag, b.create_by, b.create_time, b.update_by, b.update_time, b.remark
+        select b.id, b.user_id, b.category_id, c.name as category_name, b.amount, b.used_amount, b.year, b.month,
+               b.warning_threshold, b.warned, b.used_percentage, b.notify_enable, b.del_flag, b.create_by, b.create_time, b.update_by, b.update_time, b.remark
         from fin_budgets b
         left join fin_categories c on b.category_id = c.id
     </sql>
@@ -41,7 +41,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="categoryId != null "> and b.category_id = #{categoryId}</if>
             <if test="year != null "> and b.year = #{year}</if>
             <if test="month != null "> and b.month = #{month}</if>
-            <if test="params.beginAmount != null and params.endAmount != null"> and b.amount between #{params.beginAmount} and #{params.endAmount}</if>
             <if test="warned != null "> and b.warned = #{warned}</if>
         </where>
         order by b.year desc, b.month desc
@@ -116,11 +115,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             year,
             month,
             amount,
-            usedAmount,
+            used_amount,
             warning_threshold,
             warned,
-            usedPercentage,
-            notifyEnable,
+            used_percentage,
+            notify_enable,
             create_by,
             create_time,
             remark
@@ -168,8 +167,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <!-- 更新预算使用情况 -->
     <update id="updateBudgetUsage" parameterType="FinBudget">
         update fin_budgets
-        set usedAmount = #{usedAmount},
-        usedPercentage = #{usedPercentage},
+        set used_amount = #{usedAmount},
+        used_percentage = #{usedPercentage},
         warned = #{warned},
         update_time = sysdate()
         where id = #{id}
