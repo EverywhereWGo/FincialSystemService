@@ -103,7 +103,7 @@
       </el-table-column>
       <el-table-column label="是否已读" align="center" prop="read">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.read ? 'Y' : 'N'"/>
+          <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.read === 1 ? 'Y' : 'N'"/>
         </template>
       </el-table-column>
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
@@ -121,7 +121,7 @@
             v-hasPermi="['finance:notification:query']"
           >查看</el-button>
           <el-button
-            v-if="!scope.row.read"
+            v-if="scope.row.read === 0"
             size="mini"
             type="text"
             icon="el-icon-check"
@@ -333,7 +333,7 @@ export default {
       const id = row.id || this.ids[0]
       getNotification(id).then(response => {
         this.form = response.data;
-        this.form.read = response.data.read ? 'Y' : 'N';
+        this.form.read = response.data.read === 1 ? 'Y' : 'N';
         this.open = true;
         this.title = "修改通知";
       });
@@ -349,9 +349,9 @@ export default {
     submitForm() {
       this.$refs["form"].validate(valid => {
         if (valid) {
-          // 将read从字符串转换为布尔值
+          // 将read从字符串转换为整数(0/1)
           const formData = { ...this.form };
-          formData.read = formData.read === 'Y';
+          formData.read = formData.read === 'Y' ? 1 : 0;
           
           if (this.form.id != null) {
             updateNotification(formData).then(response => {

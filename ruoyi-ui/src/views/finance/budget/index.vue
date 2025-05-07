@@ -217,10 +217,7 @@ export default {
     this.getCategoryOptions();
     this.isAdmin = this.$store.getters.roles.includes("admin");
     
-    // 默认设置当前年月
-    const now = new Date();
-    this.queryParams.year = now.getFullYear().toString();
-    this.queryParams.month = now.getMonth() + 1;
+    // 不默认设置当前年月，保持默认不筛选
   },
   methods: {
     /** 查询预算列表 */
@@ -292,9 +289,7 @@ export default {
     /** 重置按钮操作 */
     resetQuery() {
       this.resetForm("queryForm");
-      const now = new Date();
-      this.queryParams.year = now.getFullYear().toString();
-      this.queryParams.month = now.getMonth() + 1;
+      // 不设置默认年月，保持不筛选
       this.handleQuery();
     },
     // 多选框选中数据
@@ -327,12 +322,18 @@ export default {
             updateBudget(this.form).then(response => {
               this.$modal.msgSuccess("修改成功");
               this.open = false;
+              // 清除查询条件
+              this.queryParams.year = undefined;
+              this.queryParams.month = undefined;
               this.getList();
             });
           } else {
             addBudget(this.form).then(response => {
               this.$modal.msgSuccess("新增成功");
               this.open = false;
+              // 清除查询条件
+              this.queryParams.year = undefined;
+              this.queryParams.month = undefined;
               this.getList();
             });
           }

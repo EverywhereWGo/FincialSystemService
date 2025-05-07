@@ -100,6 +100,9 @@
     <!-- 添加或修改交易记录对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
+        <el-form-item label="用户ID" prop="userId" v-if="isAdmin">
+          <el-input v-model.number="form.userId" placeholder="请输入用户ID，默认为当前用户" />
+        </el-form-item>
         <el-form-item label="类型" prop="type">
           <el-radio-group v-model="form.type" @change="handleTypeChange">
             <el-radio :label="1">支出</el-radio>
@@ -252,6 +255,9 @@ export default {
         ],
         transactionTime: [
           { required: true, message: "交易时间不能为空", trigger: "blur" }
+        ],
+        userId: [
+          { type: 'number', message: "用户ID必须为数字", trigger: "blur" }
         ]
       },
       // 上传参数
@@ -272,7 +278,20 @@ export default {
   created() {
     this.getList();
     this.getCategoryOptions();
-    this.isAdmin = this.$store.getters.roles.includes("admin");
+    
+    // 确定当前用户是否为管理员
+    const roles = this.$store.getters.roles;
+    console.log('当前用户角色:', roles);
+    this.isAdmin = roles && (roles.includes("admin") || roles.includes("ROLE_ADMIN") || 
+      (Array.isArray(roles) && roles.some(r => r === 'admin' || r === 'ROLE_ADMIN')));
+      
+    // 处理特殊情况：检查用户权限
+    const permissions = this.$store.getters.permissions;
+    if (permissions && permissions.some(p => p === 'system:user:list')) {
+      this.isAdmin = true;
+    }
+    
+    console.log('是否为管理员:', this.isAdmin);
   },
   methods: {
     /** 获取图片完整URL */
@@ -344,9 +363,12 @@ export default {
     },
     // 表单重置
     reset() {
+      // 获取当前用户ID
+      const currentUserId = this.$store.getters.userId || (this.$store.getters.financeUser ? this.$store.getters.financeUser.id : null);
+      
       this.form = {
         id: undefined,
-        userId: undefined,
+        userId: currentUserId,
         categoryId: undefined,
         amount: undefined,
         type: 1,
@@ -408,6 +430,12 @@ export default {
           if (this.upload.isUploading) {
             this.$modal.msgWarning("图片正在上传中，请等待上传完成后再提交");
             return;
+          }
+          
+          // 确保表单中有用户ID，如果没有则设置为当前用户ID
+          if (!this.form.userId) {
+            const currentUserId = this.$store.getters.userId || (this.$store.getters.financeUser ? this.$store.getters.financeUser.id : 1);
+            this.form.userId = currentUserId;
           }
           
           if (this.form.id != null) {
