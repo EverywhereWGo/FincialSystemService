@@ -151,11 +151,17 @@ public class FinTransactionServiceImpl implements IFinTransactionService
         
         // 如果为支出类型且添加成功，更新预算使用情况
         if (rows > 0 && finTransaction.getType() != null && finTransaction.getType() == 1) {
-            // 更新预算使用情况
-            updateBudgetUsageForTransaction(finTransaction);
-            
-            // 异步执行预算预警检查
-            checkBudgetWarningAsync(finTransaction);
+            try {
+                // 更新预算使用情况
+                updateBudgetUsageForTransaction(finTransaction);
+                
+                // 异步执行预算预警检查
+                checkBudgetWarningAsync(finTransaction);
+            } catch (Exception e) {
+                // 记录错误但不影响交易记录的添加
+                System.err.println("处理预算和预警失败: " + e.getMessage());
+                e.printStackTrace();
+            }
         }
         
         return rows;
@@ -225,19 +231,25 @@ public class FinTransactionServiceImpl implements IFinTransactionService
      * @param transaction 交易记录
      */
     private void updateBudgetUsageForTransaction(FinTransaction transaction) {
-        // 从交易时间中获取年月
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(transaction.getTransactionTime());
-        int year = calendar.get(Calendar.YEAR);
-        int month = calendar.get(Calendar.MONTH) + 1; // Calendar月份从0开始
-        
-        // 更新该分类的预算使用情况
-        finBudgetService.updateBudgetUsage(
-            transaction.getUserId(), 
-            transaction.getCategoryId(), 
-            year, 
-            month
-        );
+        try {
+            // 从交易时间中获取年月
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(transaction.getTransactionTime());
+            int year = calendar.get(Calendar.YEAR);
+            int month = calendar.get(Calendar.MONTH) + 1; // Calendar月份从0开始
+            
+            // 更新该分类的预算使用情况
+            finBudgetService.updateBudgetUsage(
+                transaction.getUserId(), 
+                transaction.getCategoryId(), 
+                year, 
+                month
+            );
+        } catch (Exception e) {
+            // 记录错误但不影响交易记录的添加
+            System.err.println("更新预算使用情况失败: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
     
     /**
@@ -306,8 +318,14 @@ public class FinTransactionServiceImpl implements IFinTransactionService
      * @param finTransaction 交易记录
      */
     private void checkBudgetWarningAsync(FinTransaction finTransaction) {
-        // 使用线程池执行任务
-        budgetWarningTask.setTransaction(finTransaction);
-        FinanceThreadPoolUtil.execute(budgetWarningTask);
+        try {
+            // 使用线程池执行任务
+            budgetWarningTask.setTransaction(finTransaction);
+            FinanceThreadPoolUtil.execute(budgetWarningTask);
+        } catch (Exception e) {
+            // 记录错误但不影响交易记录的添加
+            System.err.println("异步检查预算预警失败: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 } 

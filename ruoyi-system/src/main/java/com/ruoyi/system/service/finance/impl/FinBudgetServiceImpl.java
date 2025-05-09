@@ -366,6 +366,12 @@ public class FinBudgetServiceImpl implements IFinBudgetService
         {
             BigDecimal percentage = spentAmount.multiply(new BigDecimal("100"))
                     .divide(budget.getAmount(), 2, RoundingMode.HALF_UP);
+            
+            // 限制百分比最大值为999.99，防止超出数据库字段范围
+            if (percentage.compareTo(new BigDecimal("999.99")) > 0) {
+                percentage = new BigDecimal("999.99");
+            }
+            
             budget.setUsedPercentage(percentage);
             
             System.out.println("使用百分比: " + percentage + ", 预警阈值: " + budget.getWarningThreshold());
