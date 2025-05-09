@@ -369,13 +369,6 @@ public class FinBudgetServiceImpl implements IFinBudgetService
             budget.setUsedPercentage(percentage);
             
             System.out.println("使用百分比: " + percentage + ", 预警阈值: " + budget.getWarningThreshold());
-            
-            // 检查是否超过预警阈值
-            if (!budget.getWarned() && percentage.compareTo(budget.getWarningThreshold()) >= 0)
-            {
-                budget.setWarned(true);
-                System.out.println("设置预警状态为true");
-            }
         }
         else
         {

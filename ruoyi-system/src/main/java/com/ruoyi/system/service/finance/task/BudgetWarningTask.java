@@ -111,20 +111,8 @@ public class BudgetWarningTask implements Runnable {
                 return;
             }
             
-            // 更新预算使用情况
-            log.info("更新预算使用情况: userId={}, categoryId={}, year={}, month={}", 
-                    transaction.getUserId(), transaction.getCategoryId(), year, month);
-            int updateResult = finBudgetService.updateBudgetUsage(transaction.getUserId(), transaction.getCategoryId(), year, month);
-            log.info("更新预算使用情况结果: {}", updateResult);
-            
-            // 重新查询更新后的预算数据
-            budget = finBudgetMapper.selectFinBudgetByUserAndCategory(params);
-            if (budget == null) {
-                log.error("预算数据异常，无法获取更新后的预算: userId={}, categoryId={}, year={}, month={}", 
-                          transaction.getUserId(), transaction.getCategoryId(), year, month);
-                return;
-            }
-            
+            // 不需要再次更新预算使用情况，因为交易添加时已经更新过一次
+            // 直接检查预警条件
             log.info("预算使用情况: amount={}, usedAmount={}, usedPercentage={}, warningThreshold={}", 
                      budget.getAmount(), budget.getUsedAmount(), budget.getUsedPercentage(), budget.getWarningThreshold());
             
