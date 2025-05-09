@@ -16,7 +16,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="warningThreshold"  column="warning_threshold" />
         <result property="warned"            column="warned"            />
         <result property="usedPercentage"    column="used_percentage"    />
-        <result property="notifyEnable"      column="notify_enabled"      />
+        <result property="notifyEnable"      column="notify_enable"      />
         <result property="delFlag"           column="del_flag"          />
         <result property="createBy"          column="create_by"         />
         <result property="createTime"        column="create_time"       />
@@ -148,7 +148,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="amount != null">amount = #{amount},</if>
             <if test="warningThreshold != null">warning_threshold = #{warningThreshold},</if>
             <if test="warned != null">warned = #{warned},</if>
-            <if test="notifyEnable != null">notifyEnable = #{notifyEnable},</if>
+            <if test="notifyEnable != null">notify_enable = #{notifyEnable},</if>
             <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
             update_time = sysdate(),
             <if test="remark != null and remark != ''">remark = #{remark},</if>
